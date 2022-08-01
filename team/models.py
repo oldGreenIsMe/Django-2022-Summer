@@ -1,9 +1,6 @@
 from django.db import models
 
 
-# Create your models here.
-
-
 class Team(models.Model):
     teamid = models.AutoField(primary_key=True)
     teamname = models.CharField(max_length=100, default='')
@@ -17,7 +14,6 @@ class User(models.Model):
     photo = models.ImageField(upload_to='img', default='img/default_photo.png')
     team_belonged = models.ManyToManyField(Team, through='UserTeam')
     email = models.EmailField()
-
 
 
 class UserTeam(models.Model):
