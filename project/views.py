@@ -37,7 +37,6 @@ def deleteProj(request):
     return JsonResponse({'errno': 0, 'msg': '项目删除成功'})
 
 
-
 @csrf_exempt
 def renameProj(request):
     if request.method != 'POST':
@@ -70,4 +69,3 @@ def detailProj(request):
         return JsonResponse({'errno': 300001, 'msg': '项目不存在'})
 
     return JsonResponse({'errno': 0, 'msg': '查看成功'})
-
