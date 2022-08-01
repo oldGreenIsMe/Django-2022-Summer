@@ -1,7 +1,5 @@
-from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
 from team.models import User
 from utils.token import create_token
 

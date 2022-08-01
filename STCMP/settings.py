@@ -18,7 +18,7 @@ SECRET_KEY = 'django-insecure-ur&+wz2m)6orky7)586re62ehf%@7xkgk6_9%r=(36&#j^2=d)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -104,7 +104,7 @@ DATABASES = {
         'USER': 'shlprn',
         'PASSWORD': '021010',
         'HOST': '43.138.55.69',
-        'NAME': 'STCMP',
+        'NAME': 'stcmp',
         'POST': 3306
     }
 }
