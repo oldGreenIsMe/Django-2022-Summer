@@ -7,6 +7,7 @@ class Team(models.Model):
 
 
 class User(models.Model):
+    objects = models.Manager
     userid = models.AutoField(primary_key=True)
     username = models.CharField(max_length=100, default='')
     truename = models.CharField(max_length=100, default='')
