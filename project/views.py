@@ -32,4 +32,5 @@ def deleteProj(request):
     project.status = 2
     project.deletePerson = user
     project.deleteTime = time
+    project.save()
     return JsonResponse({'errno': 0, 'msg': '项目删除成功'})
