@@ -23,11 +23,11 @@ def decrypt(src):
 
 
 # 生成token信息
-def create_token(username):
+def create_token(userid):
     # 1.加密头信息
     header = encrypt(HEADER)
     # 2.构造Payload(有效期1天)
-    payload = {"username": username, "iat": time.time(), "exp": time.time()+86400.0}
+    payload = {"userid": userid, "iat": time.time(), "exp": time.time()+86400.0}
     payload = encrypt(payload)
     # 3.生成签名
     md5 = hashlib.md5()
@@ -43,10 +43,10 @@ def get_payload(token):
     return payload
 
 
-# 通过token获取用户名
-def get_username(token):
+# 通过token获取用户id
+def get_userid(token):
     payload = get_payload(token)
-    return payload['username']
+    return payload['userid']
 
 
 def get_exp_time(token):
@@ -54,5 +54,5 @@ def get_exp_time(token):
     return payload['exp']
 
 
-def check_token(username, token):
-    return get_username(token) == username and get_exp_time(token) > time.time()
+def check_token(userid, token):
+    return get_userid(token) == userid and get_exp_time(token) > time.time()

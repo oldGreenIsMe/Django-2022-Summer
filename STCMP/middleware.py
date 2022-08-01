@@ -7,21 +7,19 @@ except ImportError:
     MiddlewareMixin = object
 
 
-API_WHITELIST = ["/api/posting/searchPosting", "/api/posting/getHomepagePostingList",
-                 "/api/posting/getSectorPostingList", "/api/posting/downloadFile",
-                 "/api/user/register", "/api/user/login"]
+API_WHITELIST = []
 
 
 class AuthorizeMiddleware(MiddlewareMixin):
     @staticmethod
     def process_request(request):
         if request.path not in API_WHITELIST:
-            username = request.META.get('HTTP_USERNAME')
+            userid = request.META.get('HTTP_USERID')
             token = request.META.get('HTTP_TOKEN')
-            if username is None or token is None:
+            if userid is None or token is None:
                 return JsonResponse({'errno': 100001, 'msg': "未查询到登录信息"})
             else:
-                if check_token(username, token):
+                if check_token(userid, token):
                     pass
                 else:
                     return JsonResponse({'errno': 100002, 'msg': "登录信息错误或已过期"})
