@@ -12,10 +12,16 @@ def createProj(request):
     projName = request.POST.get('proj_name')
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     projTeam = Team.objects.get(teamid=request.POST.get('team_id'))
+    projInfo = request.POST.get('proj_info')
+    if projInfo is None:
+        projInfo = "暂无简介"
+    startTime = request.POST.get('start_time')
+    endTime = request.POST.get('end_time')
     projects = Project.objects.filter(projName=projName, projTeam=projTeam)
     if projects.exists():
         return JsonResponse({'errno': 400001, 'msg': '项目名称重复'})
-    project = Project(projName=projName, projCreator=user, projTeam=projTeam, deletePerson=None, deleteTime=None)
+    project = Project(projName=projName, projCreator=user, projTeam=projTeam, projInfo=projInfo, startTime=startTime,
+                      endTime=endTime, deletePerson=None, deleteTime=None)
     project.save()
     return JsonResponse({'errno': 0, 'msg': '项目创建成功'})
 
@@ -103,4 +109,5 @@ def detailProj(request):
             }
         )
     print(members)
-    return JsonResponse({'errno': 0, 'msg': '查看成功', 'proj_name': proj_name, 'proj_creator': creator.username, 'proj_team': team.teamname, 'members': members})
+    return JsonResponse({'errno': 0, 'msg': '查看成功', 'proj_name': proj_name, 'proj_creator': creator.username,
+                         'proj_team': team.teamname, 'members': members})
