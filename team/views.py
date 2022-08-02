@@ -187,10 +187,14 @@ def team_manage(request):
     members = team.user_set.all()
     memberdata = []
     for member in members:
+        member_team = UserTeam.objects.get(user=member, team=team)
         memberdata.append({
             'member_id': member.userid,
             'member_name': member.username,
-            'member_photo': member.photo.url
+            'member_photo': member.photo.url,
+            'member_truename': member.truename,
+            'member_email': member.email,
+            'member_permission': member_team.permission
         })
     return JsonResponse({
         'permission': user_team.permission,
