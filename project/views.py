@@ -13,7 +13,7 @@ def createProj(request):
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     projTeam = Team.objects.get(teamid=request.POST.get('team_id'))
     projInfo = request.POST.get('proj_info')
-    if projInfo is None:
+    if projInfo is None or projInfo == "":
         projInfo = "暂无简介"
     startTime = request.POST.get('start_time')
     endTime = request.POST.get('end_time')
