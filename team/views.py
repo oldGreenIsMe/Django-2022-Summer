@@ -16,6 +16,9 @@ def register(request):
             return JsonResponse({'errno': 300002, 'msg': '两次输入的密码不一致'})
         if username == '' or truename == '':
             return JsonResponse({'errno': 300001, 'msg': '昵称与真实姓名不能为空'})
+        users = User.objects.filter(email=email)
+        if users.exists():
+            return JsonResponse({'errno': 300007, 'msg': '邮箱已注册'})
         user = User.objects.create(username=username, password=password_1, truename=truename, email=email)
         return JsonResponse({'errno': 0, 'msg': '注册成功', 'userid': user.userid})
     else:
@@ -114,7 +117,11 @@ def delete_member(request):
             return JsonResponse({'errno': 300004, 'msg': '非管理员，没有操作权限'})
         userid = request.POST.get('userid')
         user = User.objects.get(userid=userid)
-        user.team_belonged.remove(team)
+        user_team = UserTeam.objects.get(user=user, team=team)
+        if user_team.permission == 0:
+            user.team_belonged.remove(team)
+        else:
+            return JsonResponse({'errno': 300005, 'msg': '被删用户是管理员，无法被删除'})
         return JsonResponse({'errno': 0, 'msg': '删除成员成功'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
@@ -139,3 +146,37 @@ def userspace(request):
     return JsonResponse({
         'data': data
     })
+
+@csrf_exempt
+def teamspace(request):
+    userid = request.META.get('HTTP_USERID')
+    user = User.objects.get(userid=userid)
+    teamid = request.POST.get('teamid')
+    team = Team.objects.get(teamid=teamid)
+    user_teams = UserTeam.objects.filter(user=user,team=team)
+    if not user_teams.exists():
+        return JsonResponse({'errno': 300006, 'msg': '您尚未加入该团队'})
+    projs = team.project_set.all()
+    # 将项目信息放入projdata
+    projdata = []
+    for proj in projs:
+        projdata.append({
+            'proj_id': proj.projID,
+            'proj_name': proj.projName,
+
+        })
+    members = team.user_set.all()
+    memberdata = []
+    for member in members:
+        memberdata.append({
+            'member_id': member.userid,
+            'member_name': member.username,
+            'member_photo': member.photo.url
+        })
+    return JsonResponse()
+
+
+@csrf_exempt
+def team_manage(request):
+    teamid = request.POST.get('teamid')
+    team = Team.objects.get(teamid=teamid)
