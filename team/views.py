@@ -130,7 +130,7 @@ def userspace(request):
         projs = team.project_set.all()
         projs_data = []
         for proj in projs:
-            projs_data.append({'proj_id': proj.projID, 'proj_name':proj.projName})
+            projs_data.append({'proj_id': proj.projID, 'proj_name': proj.projName})
         data.append({
             'teamname': team.teamname,
             'teamid': team.teamid,
