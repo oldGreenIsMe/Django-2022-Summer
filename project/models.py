@@ -1,3 +1,4 @@
+from django.db import models
 from team.models import *
 
 
@@ -7,6 +8,9 @@ class Project(models.Model):
     projName = models.CharField(max_length=50, unique=True)
     projCreator = models.ForeignKey(to=User, null=False, blank=False, on_delete=models.CASCADE, related_name='creator')
     projTeam = models.ForeignKey(to=Team, null=False, blank=False, on_delete=models.CASCADE)
+    projInfo = models.TextField(default='暂无简介')
+    startTime = models.CharField(max_length=20, null=True, blank=True)
+    endTime = models.CharField(max_length=20, null=True, blank=True)
     # 用于判断是否被删除到回收站中 1-未被删除 2-回收站中
     status = models.IntegerField(default=1)
     # 记录删除的用户（ID）及删除时间
