@@ -92,6 +92,9 @@ def detailProj(request):
     proj = projs.first()
     proj_name = proj.projName
     creator = proj.projCreator
+    info = proj.projInfo
+    start = proj.startTime
+    end = proj.endTime
     team = proj.projTeam
     member_set = team.user_set.all()
     # if not member_set.filter(userid=users.first().userid).exists():
@@ -110,4 +113,5 @@ def detailProj(request):
         )
     print(members)
     return JsonResponse({'errno': 0, 'msg': '查看成功', 'proj_name': proj_name, 'proj_creator': creator.username,
-                         'proj_team': team.teamname, 'members': members})
+                         'proj_start': start, 'proj_end': end, 'proj_team': team.teamname,
+                         'proj_info': info, 'members': members})
