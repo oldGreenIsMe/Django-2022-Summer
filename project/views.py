@@ -23,7 +23,22 @@ def createProj(request):
     project = Project(projName=projName, projCreator=user, projTeam=projTeam, projInfo=projInfo, startTime=startTime,
                       endTime=endTime, deletePerson=None, deleteTime=None)
     project.save()
-    return JsonResponse({'errno': 0, 'msg': '项目创建成功'})
+    return JsonResponse({'errno': 0, 'msg': '项目创建成功', 'proj_id': project.projId})
+
+
+@csrf_exempt
+def modifyPhoto(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    projId = request.POST.get('proj_id')
+    projects = Project.objects.filter(projId=projId)
+    if not projects.exists():
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+    project = projects.first()
+    photo = request.FILES.get('photo')
+    project.photo = photo
+    project.save()
+    return JsonResponse({'errno': 0, 'msg': '图片修改成功'})
 
 
 @csrf_exempt
@@ -129,11 +144,11 @@ def detailProj(request):
                 'username': i.username,
                 'truename': i.truename,
                 'password': i.password,
-                'photo': i.photo,
+                'photo': i.photo.url,
                 'email': i.email
             }
         )
     print(members)
     return JsonResponse({'errno': 0, 'msg': '查看成功', 'proj_name': proj_name, 'proj_creator': creator.username,
                          'proj_start': start, 'proj_end': end, 'proj_team': team.teamname,
-                         'proj_info': info, 'members': members})
+                         'proj_info': info, 'members': members, 'proj_photo': proj.photo.url})

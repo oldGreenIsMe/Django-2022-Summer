@@ -1,5 +1,6 @@
 from django.db import models
 from team.models import *
+from utils import storage
 
 
 # 项目类
@@ -17,6 +18,7 @@ class Project(models.Model):
     deletePerson = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='deletePerson')
     deleteTime = models.CharField(max_length=20, null=True, blank=True)
+    photo = models.ImageField(upload_to='projImg', default='projImg/default.png', storage=storage.ImageStorage())
 
 
 # 文档类
