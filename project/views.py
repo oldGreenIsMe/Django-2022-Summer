@@ -35,6 +35,19 @@ def deleteProj(request):
     project.deletePerson = user
     project.deleteTime = time
     project.save()
+    return JsonResponse({'errno': 0, 'msg': '项目已移入回收站'})
+
+
+@csrf_exempt
+def clearProj(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    projId = request.POST.get('proj_id')
+    projects = Project.objects.filter(projId=projId)
+    if not projects.exists():
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+    project = projects.first()
+    project.delete()
     return JsonResponse({'errno': 0, 'msg': '项目删除成功'})
 
 
