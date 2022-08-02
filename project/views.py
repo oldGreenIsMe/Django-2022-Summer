@@ -23,7 +23,7 @@ def createProj(request):
     project = Project(projName=projName, projCreator=user, projTeam=projTeam, projInfo=projInfo, startTime=startTime,
                       endTime=endTime, deletePerson=None, deleteTime=None)
     project.save()
-    return JsonResponse({'errno': 0, 'msg': '项目创建成功'})
+    return JsonResponse({'errno': 0, 'msg': '项目创建成功', 'proj_id': project.projId})
 
 
 @csrf_exempt
