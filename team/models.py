@@ -1,4 +1,5 @@
 from django.db import models
+from utils import storage
 
 
 class Team(models.Model):
@@ -12,7 +13,7 @@ class User(models.Model):
     username = models.CharField(max_length=100, default='')
     truename = models.CharField(max_length=100, default='')
     password = models.CharField(max_length=100, default='')
-    photo = models.ImageField(upload_to='img', default='img/default_photo.png')
+    photo = models.ImageField(upload_to='img', default='img/default_photo.png', storage=storage.ImageStorage())
     team_belonged = models.ManyToManyField(Team, through='UserTeam')
     email = models.EmailField(unique=True)
 
