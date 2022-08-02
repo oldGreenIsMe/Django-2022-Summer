@@ -7,4 +7,5 @@ urlpatterns = {
     path('createProj', createProj),
     path('deleteProj', deleteProj),
     path('clearProj', clearProj),
+    path('recover', recoverProj)
 }

@@ -99,27 +99,27 @@ WSGI_APPLICATION = 'STCMP.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': 'root',
-        'PASSWORD': 'mmdhhz123',
-        'HOST': '127.0.0.1',
-        'NAME': 'stcmp',
-        'POST': 3306
-    }
-}
-
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
 #         'USER': 'root',
-#         'PASSWORD': 'Lwh122381',
-#         'HOST': 'localhost',
-#         'NAME': 'STCMP',
-#         'POST': 3306,
+#         'PASSWORD': 'mmdhhz123',
+#         'HOST': '127.0.0.1',
+#         'NAME': 'stcmp',
+#         'POST': 3306
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'root',
+        'PASSWORD': 'Lwh122381',
+        'HOST': 'localhost',
+        'NAME': 'STCMP',
+        'POST': 3306,
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
