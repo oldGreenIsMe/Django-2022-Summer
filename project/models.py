@@ -17,6 +17,7 @@ class Project(models.Model):
     deletePerson = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='deletePerson')
     deleteTime = models.CharField(max_length=20, null=True, blank=True)
+    photo = models.ImageField(upload_to='team_photo', default='team_photo/default.png')
 
 
 # 文档类
