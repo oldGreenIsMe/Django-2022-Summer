@@ -101,9 +101,9 @@ WSGI_APPLICATION = 'STCMP.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'USER': 'shlprn',
-        'PASSWORD': '021010',
-        'HOST': '43.138.55.69',
+        'USER': 'root',
+        'PASSWORD': 'mmdhhz123',
+        'HOST': '127.0.0.1',
         'NAME': 'stcmp',
         'POST': 3306
     }

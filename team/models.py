@@ -14,7 +14,7 @@ class User(models.Model):
     password = models.CharField(max_length=100, default='')
     photo = models.ImageField(upload_to='img', default='img/default_photo.png')
     team_belonged = models.ManyToManyField(Team, through='UserTeam')
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
 
 
 class UserTeam(models.Model):
