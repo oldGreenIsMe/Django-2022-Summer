@@ -16,8 +16,8 @@ def register(request):
             return JsonResponse({'errno': 300002, 'msg': '两次输入的密码不一致'})
         if username == '' or truename == '':
             return JsonResponse({'errno': 300001, 'msg': '昵称与真实姓名不能为空'})
-        User.objects.create(username=username, password=password_1, truename=truename, email=email)
-        return JsonResponse({'errno': 0, 'msg': '注册成功'})
+        user = User.objects.create(username=username, password=password_1, truename=truename, email=email)
+        return JsonResponse({'errno': 0, 'msg': '注册成功', 'userid': user.userid})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
 
@@ -79,22 +79,63 @@ def create_team(request):
         creator = User.objects.get(userid=creatorid)
         team = Team.objects.create(teamname=teamname)
         UserTeam.objects.create(user=creator, team=team, permission=2)
-        return JsonResponse({'errno': 0, 'msg': '创建团队成功'})
+        return JsonResponse({'errno': 0, 'msg': '创建团队成功', 'teamid': team.teamid})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
 
 
 @csrf_exempt
-def invite_admin(request):
+def invite_user(request):
     if request.method == 'POST':
-        permission = request.POST.get('permission')
-        if permission == 0:
-            return JsonResponse({'errno': 300004, 'msg':'非管理员，没有操作权限'})
+        adminid = request.META.get('HTTP_USERID')
+        admin = User.objects.get(userid=adminid)
         teamid = request.POST.get('teamid')
+        team = Team.objects.get(teamid=teamid)
+        admin_team = UserTeam.objects.get(user=admin, team=team)
+        if admin_team.permission == 0:
+            return JsonResponse({'errno': 300004, 'msg':'非管理员，没有操作权限'})
         userid = request.POST.get('userid')
         user = User.objects.get(userid=userid)
-        team = Team.objects.get(teamid=teamid)
         UserTeam.objects.create(user=user, team=team, permission=0)
         return JsonResponse({'errno': 0, 'msg': '邀请成员成功'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def delete_member(request):
+    if request.method == 'POST':
+        adminid = request.META.get('HTTP_USERID')
+        teamid = request.POST.get('teamid')
+        admin = User.objects.get(userid=adminid)
+        team = Team.objects.get(teamid=teamid)
+        admin_team = UserTeam.objects.get(user=admin, team=team)
+        if admin_team.permission == 0:
+            return JsonResponse({'errno': 300004, 'msg': '非管理员，没有操作权限'})
+        userid = request.POST.get('userid')
+        user = User.objects.get(userid=userid)
+        user.team_belonged.remove(team)
+        return JsonResponse({'errno': 0, 'msg': '删除成员成功'})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def userspace(request):
+    userid = request.META.get('HTTP_USERID')
+    user = User.objects.get(userid=userid)
+    teams = user.team_belonged.all()
+    data = []
+    for team in teams:
+        projs = team.project_set.all()
+        projs_data = []
+        for proj in projs:
+            projs_data.append({'proj_id': proj.projID, 'proj_name':proj.projName})
+        data.append({
+            'teamname': team.teamname,
+            'teamid': team.teamid,
+            'proj': projs_data
+        })
+    return JsonResponse({
+        'data': data
+    })
