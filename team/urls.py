@@ -15,5 +15,9 @@ urlpatterns = {
     # http://127.0.0.1/api/team/delete_member
     path('delete_member', delete_member),
     # http://127.0.0.1/api/team/userspace
-    path('userspace', userspace)
+    path('userspace', userspace),
+    # http://127.0.0.1/api/team/teamspace
+    path('teamspace', teamspace),
+    # http://127.0.0.1/api/team/team_manage
+    path('team_manage', team_manage)
 }

@@ -156,6 +156,7 @@ def teamspace(request):
     user_teams = UserTeam.objects.filter(user=user,team=team)
     if not user_teams.exists():
         return JsonResponse({'errno': 300006, 'msg': '您尚未加入该团队'})
+    user_team = user_teams.first()
     projs = team.project_set.all()
     # 将项目信息放入projdata
     projdata = []
@@ -163,7 +164,7 @@ def teamspace(request):
         projdata.append({
             'proj_id': proj.projID,
             'proj_name': proj.projName,
-
+            'proj_photo': proj.photo
         })
     members = team.user_set.all()
     memberdata = []
@@ -173,10 +174,25 @@ def teamspace(request):
             'member_name': member.username,
             'member_photo': member.photo.url
         })
-    return JsonResponse()
+    return JsonResponse({'projs': projdata, 'members': memberdata, 'permission': user_team.permission})
 
 
 @csrf_exempt
 def team_manage(request):
     teamid = request.POST.get('teamid')
     team = Team.objects.get(teamid=teamid)
+    userid = request.META.get('HTTP_USERID')
+    user = User.objects.get(userid=userid)
+    user_team = UserTeam.objects.get(user=user, team=team)
+    members = team.user_set.all()
+    memberdata = []
+    for member in members:
+        memberdata.append({
+            'member_id': member.userid,
+            'member_name': member.username,
+            'member_photo': member.photo.url
+        })
+    return JsonResponse({
+        'permission': user_team.permission,
+        'members': memberdata
+    })
