@@ -106,8 +106,6 @@ def recoverProj(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
-    if not users.exists():
-        return JsonResponse({'errno': 500001, 'msg': '请登录'})
     projid = request.POST.get('proj_id')
     projs = Project.objects.filter(projId=projid)
     if not projs.exists():
@@ -128,9 +126,6 @@ def recoverProj(request):
 def renameProj(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
-    if not users.exists():
-        return JsonResponse({'errno': 500001, 'msg': '请登录'})
     projid = request.POST.get('proj_id')
     projs = Project.objects.filter(projId=projid)
     if not projs.exists():
@@ -138,7 +133,8 @@ def renameProj(request):
     newname = request.POST.get('new_name')
     if newname is None or newname == '':
         return JsonResponse({'errno': 400003, 'msg': '名称不能为空'})
-
+    if Project.objects.filter(projName=newname).exists():
+        return JsonResponse({'errno': 400001, 'msg': '项目名称重复'})
     Project.objects.filter(projId=projid).update(projName=newname)
     return JsonResponse({'errno': 0, 'msg': '修改成功'})
 
@@ -148,8 +144,6 @@ def detailProj(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
-    if not users.exists():
-        return JsonResponse({'errno': 500001, 'msg': '请登录'})
 
     projid = request.POST.get('proj_id')
     projs = Project.objects.filter(projId=projid)
@@ -188,8 +182,6 @@ def create_proto(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
-    if not users.exists():
-        return JsonResponse({'errno': 500001, 'msg': '请登录'})
     projid = request.POST.get('proj_id')
     projs = Project.objects.filter(projId=projid)
     if not projs.exists():
@@ -198,7 +190,7 @@ def create_proto(request):
     proto_name = request.POST.get('proto_name')
     protos = Prototype.objects.filter(protoName=proto_name, projectId=projid)
     if protos.exists():
-        return JsonResponse({'errno': 400001, 'msg': '设计原型名称重复'})
+        return JsonResponse({'errno': 400010, 'msg': '设计原型名称重复'})
     proto = Prototype(projectId=proj, protoName=proto_name, protoCreator=users.first())
     proto.save()
     return JsonResponse({'errno': 0, 'msg': '创建成功', 'proto_id': proto.prototypeId})
@@ -208,9 +200,6 @@ def create_proto(request):
 def upload_proto(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
-    if not users.exists():
-        return JsonResponse({'errno': 500001, 'msg': '请登录'})
     proto_id = request.POST.get('proto_id')
     protos = Prototype.objects.filter(prototypeId=proto_id)
     if not protos.exists():
@@ -229,9 +218,6 @@ def upload_proto(request):
 def get_proto(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
-    if not users.exists():
-        return JsonResponse({'errno': 500001, 'msg': '请登录'})
     proto_id = request.POST.get('proto_id')
     protos = Prototype.objects.filter(prototypeId=proto_id)
     if not protos.exists():
@@ -245,15 +231,15 @@ def get_proto(request):
 def rename_proto(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
-    if not users.exists():
-        return JsonResponse({'errno': 500001, 'msg': '请登录'})
     proto_id = request.POST.get('proto_id')
     protos = Prototype.objects.filter(prototypeId=proto_id)
     if not protos.exists():
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
-    proto = protos.first()
     new_name = request.POST.get('new_name')
+    proto = protos.first()
+    projid = proto.projectId
+    if Prototype.objects.filter(protoName=new_name, projectId=projid).exists():
+        return JsonResponse({'errno': 400010, 'msg': '设计原型名称重复'})
     proto.protoName = new_name
     proto.save()
     return JsonResponse({'errno': 0, 'msg': '修改成功'})
@@ -263,9 +249,6 @@ def rename_proto(request):
 def delete_proto(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
-    if not users.exists():
-        return JsonResponse({'errno': 500001, 'msg': '请登录'})
     proto_id = request.POST.get('proto_id')
     protos = Prototype.objects.filter(prototypeId=proto_id)
     if not protos.exists():
