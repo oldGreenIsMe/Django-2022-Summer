@@ -19,5 +19,8 @@ urlpatterns = {
     # http://127.0.0.1/api/team/teamspace
     path('teamspace', teamspace),
     # http://127.0.0.1/api/team/team_manage
-    path('team_manage', team_manage)
+    path('team_manage', team_manage),
+    path('modify_username', modify_username),
+    path('modify_password', modify_password),
+    path('modify_photo', modify_photo)
 }
