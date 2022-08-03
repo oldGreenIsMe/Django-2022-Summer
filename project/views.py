@@ -206,7 +206,7 @@ def upload_proto(request):
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
     proto_file = request.FILES.get('proto_file')
     proto = protos.first()
-    old_file = proto.protoFile
+    # old_file = proto.protoFile
     if proto.protoFile != 'projProto/proto_default.json':
         protoDelete(instance=proto)
     proto.protoFile = proto_file
