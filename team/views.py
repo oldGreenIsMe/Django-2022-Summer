@@ -242,7 +242,7 @@ def modify_photo(request):
 def modify_password(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    users = User.objects.filter(username=request.META.get('HTTP_USERID'))
+    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
     if not users.exists():
         return JsonResponse({'errno': 100004, 'msg': '用户不存在'})
     user = users.first()
