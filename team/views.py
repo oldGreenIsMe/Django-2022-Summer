@@ -31,6 +31,8 @@ def login(request):
         userid = request.POST.get('userid')
         password = request.POST.get('password')
         users = User.objects.filter(userid=userid)
+        if not users.exists():
+            users = User.objects.filter(email=userid)
         if users.exists():
             user = users.first()
             if user.password == password:
@@ -43,6 +45,8 @@ def login(request):
                         'authorization': token,
                         'userid': user.userid,
                         'photo': user.photo.url,
+                        'email': user.email,
+                        'truename': user.truename
                     }
                 })
             else:
@@ -174,7 +178,7 @@ def teamspace(request):
             'member_name': member.username,
             'member_photo': member.photo.url
         })
-    return JsonResponse({'projs': projdata, 'members': memberdata, 'permission': user_team.permission})
+    return JsonResponse({'projs': projdata, 'members': memberdata, 'permission': user_team.permission, 'teamname': team.teamname})
 
 
 @csrf_exempt
@@ -187,12 +191,65 @@ def team_manage(request):
     members = team.user_set.all()
     memberdata = []
     for member in members:
+        member_team = UserTeam.objects.get(user=member, team=team)
         memberdata.append({
             'member_id': member.userid,
             'member_name': member.username,
-            'member_photo': member.photo.url
+            'member_photo': member.photo.url,
+            'member_truename': member.truename,
+            'member_email': member.email,
+            'member_permission': member_team.permission
         })
     return JsonResponse({
         'permission': user_team.permission,
         'members': memberdata
     })
+
+
+@csrf_exempt
+def modify_username(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
+    if not users.exists():
+        return JsonResponse({'errno': 50001, 'msg': '用户尚未登录或注册'})
+    user = users.first()
+    username = request.POST.get('username')
+    if username is None or username == '':
+        return JsonResponse({'errno': 400001, 'msg': '没有做出修改'})
+    user.username = username
+    user.save()
+    return JsonResponse({'errno': 0, 'msg': '名称修改成功', 'username': username})
+
+
+@csrf_exempt
+def modify_photo(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
+    if not users.exists():
+        return JsonResponse({'errno': 500001, 'msg': '用户尚未登录或注册'})
+    user = users.first()
+    photo = request.FILES.get('photo', None)
+    if photo is None:
+        return JsonResponse({'errno': 400001, 'msg': '没有做出修改'})
+    user.photo = photo
+    user.save()
+    return JsonResponse({'errno': 0, 'msg': '图片修改成功', 'photo': user.photo.url})
+
+
+@csrf_exempt
+def modify_password(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
+    if not users.exists():
+        return JsonResponse({'errno': 100004, 'msg': '用户不存在'})
+    user = users.first()
+    password_1 = request.POST.get('password_1')
+    password_2 = request.POST.get('password_2')
+    if password_1 != password_2:
+        return JsonResponse({'errno': 300002, 'msg': '两次输入的密码不一致'})
+    user.password = password_1
+    user.save()
+    return JsonResponse({'errno': 0, 'msg': '修改密码成功'})
