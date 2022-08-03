@@ -51,3 +51,8 @@ class Prototype(models.Model):
 @receiver(pre_delete, sender=Project)
 def projPhotoDelete(instance, **kwargs):
     instance.photo.delete(False)
+
+
+@receiver(pre_delete, sender=Prototype)
+def protoDelete(instance, **kwargs):
+    instance.protoFile.delete(False)

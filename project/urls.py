@@ -14,6 +14,7 @@ urlpatterns = {
     path('upload_proto', upload_proto),
     path('get_proto', get_proto),
     path('rename_proto', rename_proto),
+    path('delete_proto', delete_proto),
     path('createFile', createFile),
     path('deleteFile', deleteFile),
     path('modifyFile', modifyFile),

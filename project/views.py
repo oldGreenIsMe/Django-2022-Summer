@@ -217,7 +217,9 @@ def upload_proto(request):
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
     proto_file = request.FILES.get('proto_file')
     proto = protos.first()
-    # old_file = proto.protoFile.url
+    old_file = proto.protoFile
+    if proto.protoFile != 'projProto/proto_default.json':
+        protoDelete(instance=proto)
     proto.protoFile = proto_file
     proto.save()
     return JsonResponse({'errno': 0, 'msg': '上传成功'})
@@ -255,6 +257,22 @@ def rename_proto(request):
     proto.protoName = new_name
     proto.save()
     return JsonResponse({'errno': 0, 'msg': '修改成功'})
+
+
+@csrf_exempt
+def delete_proto(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
+    if not users.exists():
+        return JsonResponse({'errno': 500001, 'msg': '请登录'})
+    proto_id = request.POST.get('proto_id')
+    protos = Prototype.objects.filter(prototypeId=proto_id)
+    if not protos.exists():
+        return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
+    proto = protos.first()
+    proto.delete()
+    return JsonResponse({'errno': 0, 'msg': '删除成功'})
 
 
 @csrf_exempt
