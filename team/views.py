@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from team.models import User, Team, UserTeam
+from team.models import *
 from utils.token import create_token
 
 
@@ -100,7 +100,7 @@ def invite_user(request):
         team = Team.objects.get(teamid=teamid)
         admin_team = UserTeam.objects.get(user=admin, team=team)
         if admin_team.permission == 0:
-            return JsonResponse({'errno': 300004, 'msg':'非管理员，没有操作权限'})
+            return JsonResponse({'errno': 300004, 'msg': '非管理员，没有操作权限'})
         userid = request.POST.get('userid')
         user = User.objects.get(userid=userid)
         UserTeam.objects.create(user=user, team=team, permission=0)
@@ -151,13 +151,14 @@ def userspace(request):
         'data': data
     })
 
+
 @csrf_exempt
 def teamspace(request):
     userid = request.META.get('HTTP_USERID')
     user = User.objects.get(userid=userid)
     teamid = request.POST.get('teamid')
     team = Team.objects.get(teamid=teamid)
-    user_teams = UserTeam.objects.filter(user=user,team=team)
+    user_teams = UserTeam.objects.filter(user=user, team=team)
     if not user_teams.exists():
         return JsonResponse({'errno': 300006, 'msg': '您尚未加入该团队'})
     user_team = user_teams.first()
@@ -178,7 +179,8 @@ def teamspace(request):
             'member_name': member.username,
             'member_photo': member.photo.url
         })
-    return JsonResponse({'projs': projdata, 'members': memberdata, 'permission': user_team.permission, 'teamname': team.teamname})
+    return JsonResponse({'projs': projdata, 'members': memberdata, 'permission': user_team.permission,
+                         'teamname': team.teamname})
 
 
 @csrf_exempt
@@ -233,6 +235,8 @@ def modify_photo(request):
     photo = request.FILES.get('photo', None)
     if photo is None:
         return JsonResponse({'errno': 400001, 'msg': '没有做出修改'})
+    if user.photo != 'img/default_photo.png':
+        userPhotoDelete(user)
     user.photo = photo
     user.save()
     return JsonResponse({'errno': 0, 'msg': '图片修改成功', 'photo': user.photo.url})

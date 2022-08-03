@@ -36,6 +36,8 @@ def modifyProjPhoto(request):
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     project = projects.first()
     photo = request.FILES.get('photo')
+    if project.photo != 'projImg/default.png':
+        projPhotoDelete(instance=project)
     project.photo = photo
     project.save()
     return JsonResponse({'errno': 0, 'msg': '图片修改成功'})
@@ -109,7 +111,7 @@ def recoverProj(request):
     projid = request.POST.get('proj_id')
     projs = Project.objects.filter(projId=projid)
     if not projs.exists():
-        return JsonResponse({'errno': 300001, 'msg': '项目不存在'})
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     proj = projs.first()
     team = proj.projTeam
     member_set = team.user_set.all()
@@ -132,7 +134,7 @@ def renameProj(request):
     projid = request.POST.get('proj_id')
     projs = Project.objects.filter(projId=projid)
     if not projs.exists():
-        return JsonResponse({'errno': 300001, 'msg': '项目不存在'})
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     newname = request.POST.get('new_name')
     if newname is None or newname == '':
         return JsonResponse({'errno': 400003, 'msg': '名称不能为空'})
@@ -152,7 +154,7 @@ def detailProj(request):
     projid = request.POST.get('proj_id')
     projs = Project.objects.filter(projId=projid)
     if not projs.exists():
-        return JsonResponse({'errno': 300001, 'msg': '项目不存在'})
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     proj = projs.first()
     proj_name = proj.projName
     creator = proj.projCreator
@@ -191,7 +193,7 @@ def create_proto(request):
     projid = request.POST.get('proj_id')
     projs = Project.objects.filter(projId=projid)
     if not projs.exists():
-        return JsonResponse({'errno': 300001, 'msg': '项目不存在'})
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     proj = projs.first()
     proto_name = request.POST.get('proto_name')
     protos = Prototype.objects.filter(protoName=proto_name, projectId=projid)
@@ -215,7 +217,7 @@ def upload_proto(request):
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
     proto_file = request.FILES.get('proto_file')
     proto = protos.first()
-    old_file = proto.protoFile.url
+    # old_file = proto.protoFile.url
     proto.protoFile = proto_file
     proto.save()
     return JsonResponse({'errno': 0, 'msg': '上传成功'})
@@ -253,3 +255,107 @@ def rename_proto(request):
     proto.protoName = new_name
     proto.save()
     return JsonResponse({'errno': 0, 'msg': '修改成功'})
+
+
+@csrf_exempt
+def createFile(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    fileName = request.POST.get('file_name')
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    createTime = request.POST.get('create_time')
+    projects = Project.objects.filter(projId=request.POST.get('proj_id'))
+    if not projects.exists():
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+    project = projects.first()
+    files = File.objects.filter(projectId=project.projId, fileName=fileName)
+    if files.first() is not None:
+        return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
+    file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
+                lastEditUser=user, projectId=project)
+    file.save()
+    return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
+
+
+@csrf_exempt
+def deleteFile(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    files = File.objects.filter(fileId=request.POST.get('file_id'))
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
+    file.delete()
+    return JsonResponse({'errno': 0, 'msg': '文档删除成功'})
+
+
+@csrf_exempt
+def modifyFile(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    files = File.objects.filter(fileId=request.POST.get('file_id'))
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
+    content = request.POST.get('content')
+    modifyTime = request.POST.get('modify_time')
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    file.content = content
+    file.lastEditTime = modifyTime
+    file.lastEditUser = user
+    file.save()
+    return JsonResponse({'errno': 0, 'msg': '文档编辑成功'})
+
+
+@csrf_exempt
+def renameFile(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    projects = Project.objects.filter(projId=request.POST.get('proj_id'))
+    if not projects.exists():
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+    project = projects.first()
+    files = File.objects.filter(fileId=request.POST.get('file_id'))
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
+    fileName = request.POST.get('file_name')
+    files = File.objects.filter(projectId=project.projId, fileName=fileName)
+    if files.first() is not None:
+        return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
+    file.fileName = fileName
+    file.save()
+    return JsonResponse({'errno': 0, 'msg': '文档重命名成功'})
+
+
+@csrf_exempt
+def getFileList(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    projects = Project.objects.filter(projId=request.POST.get('proj_id'))
+    if not projects.exists():
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+    project = projects.first()
+    fileList = project.file_set.all().order_by('-lastEditTimeRecord')
+    data = []
+    for file in fileList:
+        data.append({
+            'file_id': int(file.fileId),
+            'file_name': file.fileName,
+            'file_creator': User.objects.filter(userid=file.fileCreator.userid).first().username,
+            'create_time': file.create,
+            'last_modify_time': file.lastEditTime,
+            'last_modify_user': User.objects.filter(userid=file.lastEditUser.userid).first().username
+        })
+    return JsonResponse({'errno': 0, 'msg': '文档列表查询成功', 'data': data})
+
+
+@csrf_exempt
+def getFileContent(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    files = File.objects.filter(fileId=request.POST.get('file_id'))
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
+    return JsonResponse({'errno': 0, 'msg': '文档内容获取成功', 'content': file.content})

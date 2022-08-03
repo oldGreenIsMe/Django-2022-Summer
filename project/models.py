@@ -1,6 +1,8 @@
 from django.db import models
 from team.models import *
 from utils import storage
+from django.dispatch import receiver
+from django.db.models.signals import pre_delete
 
 
 # 项目类
@@ -32,6 +34,7 @@ class File(models.Model):
     lastEditTime = models.CharField(max_length=20, null=True, blank=True)
     lastEditUser = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE,
                                      related_name='lastEditUser')
+    lastEditTimeRecord = models.DateTimeField(auto_now=True)
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
 
 
@@ -43,3 +46,8 @@ class Prototype(models.Model):
     protoCreator = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE)
     protoFile = models.FileField(upload_to='projProto', default='projProto/proto_default.json',
                                  storage=storage.ProtoStorage)
+
+
+@receiver(pre_delete, sender=Project)
+def projPhotoDelete(instance, **kwargs):
+    instance.photo.delete(False)

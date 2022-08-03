@@ -1,5 +1,7 @@
-from django.db import models
 from utils import storage
+from django.db import models
+from django.dispatch import receiver
+from django.db.models.signals import pre_delete
 
 
 class Team(models.Model):
@@ -22,3 +24,8 @@ class UserTeam(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     permission = models.IntegerField(default=0)  # 0为普通成员，1为管理员, 2为创始者
+
+
+@receiver(pre_delete, sender=User)
+def userPhotoDelete(instance, **kwargs):
+    instance.photo.delete(False)
