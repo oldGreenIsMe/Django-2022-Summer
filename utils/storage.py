@@ -33,7 +33,6 @@ class ProtoStorage(FileSystemStorage):
     def __init__(self, location=settings.MEDIA_ROOT, base_url=settings.MEDIA_URL):
         super(ProtoStorage, self).__init__(location, base_url)
 
-
     def _save(self, name, content):
         import os
         import time
