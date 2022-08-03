@@ -25,7 +25,13 @@ class Project(models.Model):
 class File(models.Model):
     fileId = models.AutoField(primary_key=True)
     fileName = models.CharField(max_length=50, unique=True)
-    fileCreator = models.ForeignKey(to=User, null=False, blank=False, on_delete=models.CASCADE)
+    fileCreator = models.ForeignKey(to=User, null=False, blank=False, on_delete=models.CASCADE,
+                                    related_name='fileCreator')
+    content = models.TextField(null=True, blank=True)
+    create = models.CharField(max_length=25, null=True, blank=True)
+    lastEditTime = models.CharField(max_length=20, null=True, blank=True)
+    lastEditUser = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE,
+                                     related_name='lastEditUser')
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
 
 
