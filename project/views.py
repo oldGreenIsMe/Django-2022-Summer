@@ -152,3 +152,77 @@ def detailProj(request):
     return JsonResponse({'errno': 0, 'msg': '查看成功', 'proj_name': proj_name, 'proj_creator': creator.username,
                          'proj_start': start, 'proj_end': end, 'proj_team': team.teamname,
                          'proj_info': info, 'members': members, 'proj_photo': proj.photo.url})
+
+
+@csrf_exempt
+def create_proto(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
+    if not users.exists():
+        return JsonResponse({'errno': 500001, 'msg': '请登录'})
+    projid = request.POST.get('proj_id')
+    projs = Project.objects.filter(projId=projid)
+    if not projs.exists():
+        return JsonResponse({'errno': 300001, 'msg': '项目不存在'})
+    proj = projs.first()
+    proto_name = request.POST.get('proto_name')
+    protos = Prototype.objects.filter(protoName=proto_name, projectId=projid)
+    if protos.exists():
+        return JsonResponse({'errno': 400001, 'msg': '设计原型名称重复'})
+    proto = Prototype(projectId=proj, protoName=proto_name, protoCreator=users.first())
+    proto.save()
+    return JsonResponse({'errno': 0, 'msg': '创建成功', 'proto_id': proto.prototypeId})
+
+
+@csrf_exempt
+def upload_proto(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
+    if not users.exists():
+        return JsonResponse({'errno': 500001, 'msg': '请登录'})
+    proto_id = request.POST.get('proto_id')
+    protos = Prototype.objects.filter(prototypeId=proto_id)
+    if not protos.exists():
+        return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
+    proto_file = request.FILES.get('proto_file')
+    proto = protos.first()
+    old_file = proto.protoFile.url
+    proto.protoFile = proto_file
+    proto.save()
+    return JsonResponse({'errno': 0, 'msg': '上传成功'})
+
+
+@csrf_exempt
+def get_proto(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
+    if not users.exists():
+        return JsonResponse({'errno': 500001, 'msg': '请登录'})
+    proto_id = request.POST.get('proto_id')
+    protos = Prototype.objects.filter(prototypeId=proto_id)
+    if not protos.exists():
+        return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
+    proto = protos.first()
+    proto_file = proto.protoFile.url
+    return JsonResponse({'errno': 0, 'msg': '获取成功', 'proto_file': proto_file})
+
+
+@csrf_exempt
+def rename_proto(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
+    if not users.exists():
+        return JsonResponse({'errno': 500001, 'msg': '请登录'})
+    proto_id = request.POST.get('proto_id')
+    protos = Prototype.objects.filter(prototypeId=proto_id)
+    if not protos.exists():
+        return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
+    proto = protos.first()
+    new_name = request.POST.get('new_name')
+    proto.protoName = new_name
+    proto.save()
+    return JsonResponse({'errno': 0, 'msg': '修改成功'})

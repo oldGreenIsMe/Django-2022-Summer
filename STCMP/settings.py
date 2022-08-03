@@ -99,12 +99,23 @@ WSGI_APPLICATION = 'STCMP.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'USER': 'shlprn',
+#         'PASSWORD': '021010',
+#         'HOST': '43.138.55.69',
+#         'NAME': 'stcmp',
+#         'POST': 3306
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'USER': 'shlprn',
-        'PASSWORD': '021010',
-        'HOST': '43.138.55.69',
+        'USER': 'root',
+        'PASSWORD': 'Lwh122381',
+        'HOST': 'localhost',
         'NAME': 'stcmp',
         'POST': 3306
     }

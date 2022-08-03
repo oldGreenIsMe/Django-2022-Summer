@@ -33,3 +33,6 @@ class File(models.Model):
 class Prototype(models.Model):
     prototypeId = models.AutoField(primary_key=True)
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
+    protoName = models.CharField(max_length=50, unique=True, default='proto_default')
+    protoCreator = models.ForeignKey(to=User, null=False, blank=False, on_delete=models.CASCADE)
+    protoFile = models.FileField(upload_to='projProto', default='projProto/proto_default.json', storage=storage.ProtoStorage)
