@@ -1,6 +1,7 @@
+from django.utils import timezone
 from django.core import serializers
-from django.http import JsonResponse
 from django.shortcuts import render
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from project.models import *
 
@@ -84,6 +85,7 @@ def deleteProj(request):
     project.status = 2
     project.deletePerson = user
     project.deleteTime = time
+    project.deleteTimeRecord = timezone.now()
     project.save()
     return JsonResponse({'errno': 0, 'msg': '项目已移入回收站'})
 
@@ -175,6 +177,30 @@ def detailProj(request):
     return JsonResponse({'errno': 0, 'msg': '查看成功', 'proj_name': proj_name, 'proj_creator': creator.username,
                          'proj_start': start, 'proj_end': end, 'proj_team': team.teamname,
                          'proj_info': info, 'members': members, 'proj_photo': proj.photo.url})
+
+
+@csrf_exempt
+def getDeletedProjList(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    teams = Team.objects.filter(teamid=request.POST.get('team_id'))
+    if not teams.exists():
+        return JsonResponse({'errno': 400005, 'msg': '团队不存在'})
+    team = teams.first()
+    projList = team.project_set.all().order_by('-deleteTimeRecord')
+    data = []
+    for proj in projList:
+        if proj.deletePerson is None:
+            continue
+        data.append({
+            'proj_id': int(proj.projId),
+            'proj_name': proj.projName,
+            'delete_time': proj.deleteTime,
+            'delete_user_id': int(proj.deletePerson.userid),
+            'delete_user_name': proj.deletePerson.username,
+            'proj_info': proj.projInfo
+        })
+    return JsonResponse({'errno': 0, 'msg': '已删除项目查询成功', 'data': data})
 
 
 @csrf_exempt
@@ -346,7 +372,8 @@ def getFileList(request):
             'file_creator': User.objects.filter(userid=file.fileCreator.userid).first().username,
             'create_time': file.create,
             'last_modify_time': file.lastEditTime,
-            'last_modify_user': User.objects.filter(userid=file.lastEditUser.userid).first().username
+            'last_modify_user_id': int(file.lastEditUser.userid),
+            'last_modify_user_name': file.lastEditUser.username
         })
     return JsonResponse({'errno': 0, 'msg': '文档列表查询成功', 'data': data})
 
