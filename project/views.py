@@ -27,7 +27,7 @@ def createProj(request):
 
 
 @csrf_exempt
-def modifyPhoto(request):
+def modifyProjPhoto(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     projId = request.POST.get('proj_id')
@@ -39,6 +39,33 @@ def modifyPhoto(request):
     project.photo = photo
     project.save()
     return JsonResponse({'errno': 0, 'msg': '图片修改成功'})
+
+
+@csrf_exempt
+def modifyProjInfo(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    projId = request.POST.get('proj_id')
+    projects = Project.objects.filter(projId=projId)
+    if not projects.exists():
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+    project = projects.first()
+    judge = request.POST.get('judge')
+    msg = '修改成功'
+    if judge == 1:
+        info = request.POST.get('info')
+        project.projInfo = info
+        msg = '项目简介' + msg
+    elif judge == 2:
+        start = request.POST.get('start')
+        project.startTime = start
+        msg = '项目开始时间' + msg
+    else:
+        end = request.POST.get('end')
+        project.endTime = end
+        msg = '项目结束时间' + msg
+    project.save()
+    return JsonResponse({'errno': 0, 'msg': msg})
 
 
 @csrf_exempt

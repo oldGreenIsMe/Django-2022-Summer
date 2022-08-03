@@ -44,6 +44,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'STCMP.middleware.AuthorizeMiddleware',
 ]
 
 # Cors-headers config
@@ -60,7 +61,7 @@ CORS_ALLOW_METHODS = (
 )
 CORS_ALLOW_HEADERS = (
     'token',
-    'username',
+    'userid',
     'XMLHttpRequest',
     'X_FILENAME',
     'accept-encoding',
