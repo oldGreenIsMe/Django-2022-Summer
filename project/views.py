@@ -50,7 +50,7 @@ def modifyProjInfo(request):
     if not projects.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     project = projects.first()
-    judge = request.POST.get('judge')
+    judge = int(request.POST.get('judge'))
     msg = '修改成功'
     if judge == 1:
         info = request.POST.get('info')
