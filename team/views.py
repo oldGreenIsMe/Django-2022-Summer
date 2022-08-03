@@ -148,7 +148,8 @@ def userspace(request):
             'proj': projs_data
         })
     return JsonResponse({
-        'data': data
+        'data': data,
+        'errno': 0
     })
 
 
@@ -180,7 +181,7 @@ def teamspace(request):
             'member_photo': member.photo.url
         })
     return JsonResponse({'projs': projdata, 'members': memberdata, 'permission': user_team.permission,
-                         'teamname': team.teamname})
+                         'teamname': team.teamname, 'errno': 0})
 
 
 @csrf_exempt
@@ -204,7 +205,8 @@ def team_manage(request):
         })
     return JsonResponse({
         'permission': user_team.permission,
-        'members': memberdata
+        'members': memberdata,
+        'errno': 0
     })
 
 
