@@ -44,15 +44,10 @@ class Prototype(models.Model):
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
     protoName = models.CharField(max_length=50, unique=True, default='proto_default')
     protoCreator = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE)
-    protoFile = models.FileField(upload_to='projProto', default='projProto/proto_default.json',
-                                 storage=storage.ProtoStorage)
+    protoContent = models.TextField(null=True, blank=True)
 
 
 @receiver(pre_delete, sender=Project)
 def projPhotoDelete(instance, **kwargs):
     instance.photo.delete(False)
 
-
-@receiver(pre_delete, sender=Prototype)
-def protoDelete(instance, **kwargs):
-    instance.protoFile.delete(False)

@@ -204,12 +204,9 @@ def upload_proto(request):
     protos = Prototype.objects.filter(prototypeId=proto_id)
     if not protos.exists():
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
-    proto_file = request.FILES.get('proto_file')
+    proto_content = request.POST.get('proto_content')
     proto = protos.first()
-    # old_file = proto.protoFile
-    if proto.protoFile != 'projProto/proto_default.json':
-        protoDelete(instance=proto)
-    proto.protoFile = proto_file
+    proto.protoContent = proto_content
     proto.save()
     return JsonResponse({'errno': 0, 'msg': '上传成功'})
 
@@ -223,8 +220,8 @@ def get_proto(request):
     if not protos.exists():
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
     proto = protos.first()
-    proto_file = proto.protoFile.url
-    return JsonResponse({'errno': 0, 'msg': '获取成功', 'proto_file': proto_file})
+    proto_content = proto.protoContent
+    return JsonResponse({'errno': 0, 'msg': '获取成功', 'proto_content': proto_content})
 
 
 @csrf_exempt
