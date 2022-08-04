@@ -271,3 +271,19 @@ def modify_password(request):
     user.password = password_1
     user.save()
     return JsonResponse({'errno': 0, 'msg': '修改密码成功'})
+
+
+@csrf_exempt
+def delete_team(request):
+    if request.method == 'POST':
+        userid = request.META.get('HTTP_USERID')
+        teamid = request.POST.get('teamid')
+        user = User.objects.get(userid=userid)
+        team = Team.objects.get(teamid=teamid)
+        user_team = UserTeam.objects.get(user=user, team=team)
+        if user_team.permission != 2:
+            return JsonResponse({'errno': 300010, 'msg': '非创造者，无权限删除队伍'})
+        team.delete()
+        return JsonResponse({'errno': 0, 'msg': '删除团队成功'})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})

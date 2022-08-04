@@ -22,5 +22,6 @@ urlpatterns = {
     path('team_manage', team_manage),
     path('modify_username', modify_username),
     path('modify_password', modify_password),
-    path('modify_photo', modify_photo)
+    path('modify_photo', modify_photo),
+    path('delete_team', delete_team)
 }
