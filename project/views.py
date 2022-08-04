@@ -233,6 +233,28 @@ def get_proto(request):
 
 
 @csrf_exempt
+def proj_proto(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    proj_id = request.POST.get('proj_id')
+    if not Project.objects.filter(projId=proj_id).exists():
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+    protos = Prototype.objects.filter(projectId=proj_id)
+    protos_info = []
+    for proto in protos:
+        protos_info.append(
+            {
+                'proto_id': proto.prototypeId,
+                'proto_name': proto.protoName,
+                'creator_id': proto.protoCreator.userid,
+                'creator_name': proto.protoCreator.username,
+                'creator_truename': proto.protoCreator.truename,
+            }
+        )
+    return JsonResponse({'errno': 0, 'msg': '获取成功', 'protos_info': protos_info})
+
+
+@csrf_exempt
 def rename_proto(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
