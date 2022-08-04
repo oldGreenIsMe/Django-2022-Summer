@@ -143,7 +143,7 @@ def userspace(request):
     teams = user.team_belonged.all()
     data = []
     for team in teams:
-        projs = team.project_set.all()
+        projs = team.project_set.filter(status=1)
         projs_data = []
         for proj in projs:
             projs_data.append({'proj_id': proj.projId, 'proj_name': proj.projName})
@@ -168,7 +168,7 @@ def teamspace(request):
     if not user_teams.exists():
         return JsonResponse({'errno': 300006, 'msg': '您尚未加入该团队'})
     user_team = user_teams.first()
-    projs = team.project_set.all()
+    projs = team.project_set.filter(status=1)
     # 将项目信息放入projdata
     projdata = []
     for proj in projs:
