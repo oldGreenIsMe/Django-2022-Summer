@@ -102,7 +102,12 @@ def invite_user(request):
         if admin_team.permission == 0:
             return JsonResponse({'errno': 300004, 'msg': '非管理员，没有操作权限'})
         userid = request.POST.get('userid')
-        user = User.objects.get(userid=userid)
+        users = User.objects.filter(userid=userid)
+        if not users.exists():
+            users = User.objects.filter(email=userid)
+        if not users.exists():
+            return JsonResponse({'errno': 300008, 'msg': '被邀请用户不存在'})
+        user = users.first()
         UserTeam.objects.create(user=user, team=team, permission=0)
         return JsonResponse({'errno': 0, 'msg': '邀请成员成功'})
     else:
