@@ -46,6 +46,7 @@ class Prototype(models.Model):
     protoName = models.CharField(max_length=50, unique=True, default='proto_default')
     protoCreator = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE)
     protoContent = models.TextField(null=True, blank=True)
+    protoPhoto = models.TextField(null=True, blank=True)
 
 
 @receiver(pre_delete, sender=Project)

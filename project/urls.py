@@ -12,6 +12,7 @@ urlpatterns = {
     path('detail', detailProj),
     path('create_proto', create_proto),
     path('upload_proto', upload_proto),
+    path('upload_proto_photo', upload_proto_photo),
     path('get_proto', get_proto),
     path('rename_proto', rename_proto),
     path('delete_proto', delete_proto),

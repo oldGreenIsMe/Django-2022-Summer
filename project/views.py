@@ -246,6 +246,7 @@ def proj_proto(request):
             {
                 'proto_id': proto.prototypeId,
                 'proto_name': proto.protoName,
+                'proto_photo': proto.protoPhoto,
                 'creator_id': proto.protoCreator.userid,
                 'creator_name': proto.protoCreator.username,
                 'creator_truename': proto.protoCreator.truename,
@@ -283,6 +284,21 @@ def delete_proto(request):
     proto = protos.first()
     proto.delete()
     return JsonResponse({'errno': 0, 'msg': '删除成功'})
+
+
+@csrf_exempt
+def upload_proto_photo(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    proto_id = request.POST.get('proto_id')
+    protos = Prototype.objects.filter(prototypeId=proto_id)
+    if not protos.exists():
+        return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
+    proto = protos.first()
+    photo = request.POST.get('base64_photo')
+    proto.protoPhoto = photo
+    proto.save()
+    return JsonResponse({'errno': 0, 'msg': '上传成功'})
 
 
 @csrf_exempt
