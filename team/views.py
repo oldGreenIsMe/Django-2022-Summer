@@ -30,13 +30,14 @@ def login(request):
     if request.method == 'POST':
         userid = request.POST.get('userid')
         password = request.POST.get('password')
-        users = User.objects.filter(userid=userid)
-        if not users.exists():
+        if userid.isdigit():
+            users = User.objects.filter(userid=int(userid))
+        else:
             users = User.objects.filter(email=userid)
         if users.exists():
             user = users.first()
             if user.password == password:
-                token = create_token(userid)
+                token = create_token(str(user.userid))
                 return JsonResponse({
                     'errno': 0,
                     'msg': '登录成功',
@@ -102,12 +103,16 @@ def invite_user(request):
         if admin_team.permission == 0:
             return JsonResponse({'errno': 300004, 'msg': '非管理员，没有操作权限'})
         userid = request.POST.get('userid')
-        users = User.objects.filter(userid=userid)
-        if not users.exists():
+        if userid.isdigit():
+            users = User.objects.filter(userid=int(userid))
+        else:
             users = User.objects.filter(email=userid)
         if not users.exists():
             return JsonResponse({'errno': 300008, 'msg': '被邀请用户不存在'})
         user = users.first()
+        user_team = UserTeam.objects.filter(user=user, team=team)
+        if user_team.exists():
+            return JsonResponse({'errno': 300009, 'msg': '被邀请用户已在团队中'})
         UserTeam.objects.create(user=user, team=team, permission=0)
         return JsonResponse({'errno': 0, 'msg': '邀请成员成功'})
     else:
@@ -180,10 +185,12 @@ def teamspace(request):
     members = team.user_set.all()
     memberdata = []
     for member in members:
+        member_team = UserTeam.objects.get(user=member, team=team)
         memberdata.append({
             'member_id': member.userid,
             'member_name': member.username,
-            'member_photo': member.photo.url
+            'member_photo': member.photo.url,
+            'member_permission': member_team.permission
         })
     return JsonResponse({'projs': projdata, 'members': memberdata, 'permission': user_team.permission,
                          'teamname': team.teamname, 'errno': 0})
