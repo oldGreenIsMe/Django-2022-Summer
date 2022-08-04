@@ -55,6 +55,8 @@ def modifyProjInfo(request):
     project = projects.first()
     projName = request.POST.get('proj_name')
     projInfo = request.POST.get('proj_info')
+    if projInfo is None or projInfo == "":
+        projInfo = "暂无简介"
     startTime = request.POST.get('start_time')
     endTime = request.POST.get('end_time')
     if Project.objects.filter(projName=projName, projTeam=project.projTeam).exists():
