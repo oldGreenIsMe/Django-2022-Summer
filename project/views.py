@@ -53,22 +53,18 @@ def modifyProjInfo(request):
     if not projects.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     project = projects.first()
-    judge = int(request.POST.get('judge'))
-    msg = '修改成功'
-    if judge == 1:
-        info = request.POST.get('info')
-        project.projInfo = info
-        msg = '项目简介' + msg
-    elif judge == 2:
-        start = request.POST.get('start')
-        project.startTime = start
-        msg = '项目开始时间' + msg
-    else:
-        end = request.POST.get('end')
-        project.endTime = end
-        msg = '项目结束时间' + msg
+    projName = request.POST.get('proj_name')
+    projInfo = request.POST.get('proj_info')
+    startTime = request.POST.get('start_time')
+    endTime = request.POST.get('end_time')
+    if Project.objects.filter(projName=projName, projTeam=project.projTeam).exists():
+        return JsonResponse({'errno': 400001, 'msg': '项目名称重复'})
+    project.projName = projName
+    project.projInfo = projInfo
+    project.startTime = startTime
+    project.endTime = endTime
     project.save()
-    return JsonResponse({'errno': 0, 'msg': msg})
+    return JsonResponse({'errno': 0, 'msg': '项目信息修改成功'})
 
 
 @csrf_exempt
@@ -122,23 +118,6 @@ def recoverProj(request):
     proj.deleteTime = None
     proj.save()
     return JsonResponse({'errno': 0, 'msg': '恢复项目成功'})
-
-
-@csrf_exempt
-def renameProj(request):
-    if request.method != 'POST':
-        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    projid = request.POST.get('proj_id')
-    projs = Project.objects.filter(projId=projid)
-    if not projs.exists():
-        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
-    newname = request.POST.get('new_name')
-    if newname is None or newname == '':
-        return JsonResponse({'errno': 400003, 'msg': '名称不能为空'})
-    if Project.objects.filter(projName=newname).exists():
-        return JsonResponse({'errno': 400001, 'msg': '项目名称重复'})
-    Project.objects.filter(projId=projid).update(projName=newname)
-    return JsonResponse({'errno': 0, 'msg': '修改成功'})
 
 
 @csrf_exempt
