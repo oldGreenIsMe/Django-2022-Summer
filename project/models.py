@@ -20,6 +20,7 @@ class Project(models.Model):
     deletePerson = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='deletePerson')
     deleteTime = models.CharField(max_length=20, null=True, blank=True)
+    deleteTimeRecord = models.DateTimeField(null=True, blank=True)
     photo = models.ImageField(upload_to='projImg', default='projImg/default.png', storage=storage.ImageStorage())
 
 

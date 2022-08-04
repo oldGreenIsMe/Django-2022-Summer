@@ -9,6 +9,7 @@ urlpatterns = {
     path('modifyProjInfo', modifyProjInfo),
     path('deleteProj', deleteProj),
     path('clearProj', clearProj),
+    path('getDeletedProjList', getDeletedProjList),
     path('recover', recoverProj),
     path('create_proto', create_proto),
     path('upload_proto', upload_proto),
