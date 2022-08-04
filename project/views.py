@@ -59,7 +59,8 @@ def modifyProjInfo(request):
         projInfo = "暂无简介"
     startTime = request.POST.get('start_time')
     endTime = request.POST.get('end_time')
-    if Project.objects.filter(projName=projName, projTeam=project.projTeam).exists():
+    projects = Project.objects.filter(projName=projName, projTeam=project.projTeam)
+    if projects.exists() and projects.first() != project:
         return JsonResponse({'errno': 400001, 'msg': '项目名称重复'})
     project.projName = projName
     project.projInfo = projInfo
