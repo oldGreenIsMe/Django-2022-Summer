@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from project.models import *
+from team.models import *
 
 
 @csrf_exempt
@@ -324,6 +325,13 @@ def createFile(request):
     file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
                 lastEditUser=user, projectId=project)
     file.save()
+    team = project.projTeam
+    user_teams = UserTeam.objects.filter(team=team)
+    users = []
+    for i in user_teams:
+        users.append(i.user)
+    for u in users:
+        UserFile.objects.create(user=u, file=file)
     return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
 
 
@@ -410,3 +418,35 @@ def getFileContent(request):
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
     return JsonResponse({'errno': 0, 'msg': '文档内容获取成功', 'content': file.content})
+
+
+@csrf_exempt
+def edit_file(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    userid = request.POST.get('userid')
+    fileid = request.POST.get('fileid')
+    user = User.objects.filter(userid=userid).first()
+    file = File.objects.filter(fileId=fileid).first()
+    user_files = UserFile.objects.filter(user=user, file=file)
+    if not user_files.exists():
+        return JsonResponse({'errno': 400010, 'msg': '文件或用户不存在'})
+    status = request.POST.get('status')
+    user_file = user_files.first()
+    user_file.status = status
+    user_file.save()
+    if status == 1:
+        return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 0})
+    # operation 0 不需要传回文件内容，1 需要传回文件内容
+    user_files = UserFile.objects.filter(file=file)
+    editors = []
+    for i in user_files:
+        editors.append(i.user)
+    num = 0
+    for editor in editors:
+        if UserFile.objects.filter(user=editor, file=file).first().status == 1:
+            num = num + 1
+    if num == 0:
+        return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 1})
+    else:
+        return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 0})

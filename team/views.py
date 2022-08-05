@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from team.models import *
 from utils.token import create_token
 from utils.email import sendVerifyCodeMethod
+from project.models import *
 
 
 @csrf_exempt
@@ -305,6 +306,11 @@ def accept_invite(request):
                 return JsonResponse({'errno': 300014, 'msg': '用户权限不够'})
         UserTeam.objects.create(user=user, team=team, permission=0)
         inviteMessage.delete()
+        projs = Project.objects.filter(projTeam=team)
+        for proj in projs:
+            files = File.objects.filter(projectId=proj)
+            for file in files:
+                UserFile.objects.create(file=file, user=user)
         msg = user.username + '加入团队成功'
         return JsonResponse({'errno': 0, 'msg': msg})
     else:

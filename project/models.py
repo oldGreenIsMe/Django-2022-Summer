@@ -1,5 +1,5 @@
 from django.db import models
-from team.models import *
+from team.models import User, Team
 from utils import storage
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
@@ -37,6 +37,7 @@ class File(models.Model):
                                      related_name='lastEditUser')
     lastEditTimeRecord = models.DateTimeField(auto_now=True)
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
+    edit_file = models.ManyToManyField(User, through='UserFile')
 
 
 # 原型类
@@ -55,3 +56,8 @@ class Prototype(models.Model):
 def projPhotoDelete(instance, **kwargs):
     instance.photo.delete(False)
 
+
+class UserFile(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    status = models.IntegerField(default=0)     # 0不在编辑，1正在编辑

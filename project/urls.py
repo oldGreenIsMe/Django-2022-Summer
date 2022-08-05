@@ -23,4 +23,5 @@ urlpatterns = {
     path('renameFile', renameFile),
     path('getFileList', getFileList),
     path('getFileContent', getFileContent),
+    path('edit_file', edit_file),
 }
