@@ -29,3 +29,10 @@ class UserTeam(models.Model):
 @receiver(pre_delete, sender=User)
 def userPhotoDelete(instance, **kwargs):
     instance.photo.delete(False)
+
+
+class InviteMessage(models.Model):
+    inviteId = models.AutoField(primary_key=True)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    inviter = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='inviter_message')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_message')

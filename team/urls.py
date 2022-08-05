@@ -23,5 +23,10 @@ urlpatterns = {
     path('modify_username', modify_username),
     path('modify_password', modify_password),
     path('modify_photo', modify_photo),
-    path('delete_team', delete_team)
+    path('delete_team', delete_team),
+    path('accept_invite', accept_invite),
+    path('refuse_invite', refuse_invite),
+    path('search_team', search_team),
+    path('apply_join', apply_join),
+    path('search_user', search_user)
 }

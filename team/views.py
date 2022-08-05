@@ -94,30 +94,23 @@ def create_team(request):
 
 @csrf_exempt
 def invite_user(request):
-    if request.method == 'POST':
-        adminid = request.META.get('HTTP_USERID')
-        admin = User.objects.get(userid=adminid)
-        teamid = request.POST.get('teamid')
-        team = Team.objects.get(teamid=teamid)
-        admin_team = UserTeam.objects.get(user=admin, team=team)
-        if admin_team.permission == 0:
-            return JsonResponse({'errno': 300004, 'msg': '非管理员，没有操作权限'})
-        userid = request.POST.get('userid')
-        if userid.isdigit():
-            users = User.objects.filter(userid=int(userid))
-        else:
-            users = User.objects.filter(email=userid)
-        if not users.exists():
-            return JsonResponse({'errno': 300008, 'msg': '被邀请用户不存在'})
-        user = users.first()
-        user_team = UserTeam.objects.filter(user=user, team=team)
-        if user_team.exists():
-            return JsonResponse({'errno': 300009, 'msg': '被邀请用户已在团队中'})
-        UserTeam.objects.create(user=user, team=team, permission=0)
-        return JsonResponse({'errno': 0, 'msg': '邀请成员成功'})
+    adminid = request.META.get('HTTP_USERID')
+    admin = User.objects.get(userid=adminid)
+    teamid = request.POST.get('teamid')
+    team = Team.objects.get(teamid=teamid)
+    admin_team = UserTeam.objects.get(user=admin, team=team)
+    if admin_team.permission == 0:
+        return JsonResponse({'errno': 300004, 'msg': '非管理员，没有操作权限'})
+    userid = request.POST.get('userid')
+    if userid.isdigit():
+        users = User.objects.filter(userid=int(userid))
     else:
-        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-
+        users = User.objects.filter(email=userid)
+    if not users.exists():
+        return JsonResponse({'errno': 300008, 'msg': '被邀请用户不存在'})
+    user = users.first()
+    InviteMessage.objects.create(team=team, user=user, inviter=admin)
+    return JsonResponse({'errno': 0, 'msg': '用户邀请已发送'})
 
 @csrf_exempt
 def delete_member(request):
@@ -286,5 +279,99 @@ def delete_team(request):
             return JsonResponse({'errno': 300010, 'msg': '非创造者，无权限删除队伍'})
         team.delete()
         return JsonResponse({'errno': 0, 'msg': '删除团队成功'})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def accept_invite(request):
+    if request.method == 'POST':
+        inviteId = request.POST.get('inviteId')
+        inviteMessage = InviteMessage.objects.get(inviteId=inviteId)
+        now_user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        user = inviteMessage.user
+        team = inviteMessage.team
+        user_teams = UserTeam.objects.filter(user=user,team=team)
+        if user_teams.exists():
+            inviteMessage.delete()
+            return JsonResponse({'errno': 300013, 'msg': '用户已在团队中'})
+        if user != now_user:
+            # 当用户是在teamspace中看到申请
+            nowuser_team = UserTeam.objects.get(user=now_user, team=team)
+            if nowuser_team.permission ==0:
+                return JsonResponse({'errno': 300014, 'msg': '用户权限不够'})
+        UserTeam.objects.create(user=user, team=team, permission=0)
+        inviteMessage.delete()
+        msg = user.username + '加入团队成功'
+        return JsonResponse({'errno': 0, 'msg': msg})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def refuse_invite(request):
+    if request.method == 'POST':
+        inviteId = request.POST.get('inviteId')
+        inviteMessages = InviteMessage.objects.filter(inviteId=inviteId)
+        if not inviteMessages.exists():
+            return JsonResponse({'errno': 300011, 'msg': '邀请信息已失效'})
+        inviteMessage = inviteMessages.first()
+        now_user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        if now_user != inviteMessage.user:
+            # 当用户是在teamspace中看到申请
+            nowuser_team = UserTeam.objects.get(user=now_user, team=inviteMessage.team)
+            if nowuser_team.permission == 0:
+                return JsonResponse({'errno': 300014, 'msg': '用户权限不够'})
+        inviteMessage.delete()
+        return JsonResponse({'errno': 0, 'msg': '邀请已删除'})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+def search_team(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        teams = Team.objects.filter(teamname_icontains = name)
+        team_data = []
+        for team in teams:
+            team_data.append({
+                'teamname': team.teamname,
+                'teamid': team.teamid
+            })
+        return JsonResponse({'errno': 0, 'team_data': team_data})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+def apply_join(request):
+    if request.method == 'POST':
+        teamid = request.POST.get('teamid')
+        team = Team.objects.get(teamid=teamid)
+        userid = request.META.get('HTTP_USERID')
+        user = User.objects.get(userid=userid)
+        messages = InviteMessage.objects.filter(user=user, team=team)
+        if messages.exists():
+            return JsonResponse({'errno': 300012, 'msg':'申请已存在'})
+        InviteMessage.objects.create(team=team, user=user)
+        return JsonResponse({'errno': 0, 'msg': '申请已发送'})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def search_user(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        users = User.objects.filter(username_icontains = name)
+        user_data = []
+        for user in users:
+            user_data.append({
+                'username': user.teamname,
+                'teamid': user.teamid,
+                'photo': user.photo.url,
+                'truename': user.truename,
+                'email': user.email
+            })
+        return JsonResponse({'errno': 0, 'user_data': user_data})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
