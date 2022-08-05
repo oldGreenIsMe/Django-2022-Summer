@@ -47,6 +47,8 @@ class Prototype(models.Model):
     protoCreator = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE)
     protoContent = models.TextField(null=True, blank=True, default='[]')
     protoPhoto = models.TextField(null=True, blank=True)
+    canvas_width = models.IntegerField(default=400)
+    canvas_height = models.IntegerField(default=320)
 
 
 @receiver(pre_delete, sender=Project)

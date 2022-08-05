@@ -213,8 +213,12 @@ def upload_proto(request):
     if not protos.exists():
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
     proto_content = request.POST.get('proto_content')
+    canvas_width = request.POST.get('canvas_width')
+    canvas_height = request.POST.get('canvas_height')
     proto = protos.first()
     proto.protoContent = proto_content
+    proto.canvas_width = canvas_width
+    proto.canvas_height = canvas_height
     proto.save()
     return JsonResponse({'errno': 0, 'msg': '上传成功'})
 
@@ -229,7 +233,9 @@ def get_proto(request):
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
     proto = protos.first()
     proto_content = proto.protoContent
-    return JsonResponse({'errno': 0, 'msg': '获取成功', 'proto_content': proto_content})
+    canvas_width = proto.canvas_width
+    canvas_height = proto.canvas_height
+    return JsonResponse({'errno': 0, 'msg': '获取成功', 'proto_content': proto_content, 'canvas_width': canvas_width, 'canvas_height': canvas_height})
 
 
 @csrf_exempt
