@@ -27,7 +27,7 @@ class Project(models.Model):
 # 文档类
 class File(models.Model):
     fileId = models.AutoField(primary_key=True)
-    fileName = models.CharField(max_length=50, unique=True)
+    fileName = models.CharField(max_length=50)
     fileCreator = models.ForeignKey(to=User, null=False, blank=False, on_delete=models.CASCADE,
                                     related_name='fileCreator')
     content = models.TextField(null=True, blank=True)
