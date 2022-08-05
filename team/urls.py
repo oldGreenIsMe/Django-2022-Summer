@@ -28,5 +28,6 @@ urlpatterns = {
     path('refuse_invite', refuse_invite),
     path('search_team', search_team),
     path('apply_join', apply_join),
-    path('search_user', search_user)
+    path('search_user', search_user),
+    path('sendVerifyCode', sendVerifyCode)
 }

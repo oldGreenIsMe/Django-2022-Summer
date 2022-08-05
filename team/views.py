@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from team.models import *
 from utils.token import create_token
+from utils.email import sendVerifyCodeMethod
 
 
 @csrf_exempt
@@ -110,7 +111,9 @@ def invite_user(request):
         return JsonResponse({'errno': 300008, 'msg': '被邀请用户不存在'})
     user = users.first()
     InviteMessage.objects.create(team=team, user=user, inviter=admin)
+
     return JsonResponse({'errno': 0, 'msg': '用户邀请已发送'})
+
 
 @csrf_exempt
 def delete_member(request):
@@ -291,14 +294,14 @@ def accept_invite(request):
         now_user = User.objects.get(userid=request.META.get('HTTP_USERID'))
         user = inviteMessage.user
         team = inviteMessage.team
-        user_teams = UserTeam.objects.filter(user=user,team=team)
+        user_teams = UserTeam.objects.filter(user=user, team=team)
         if user_teams.exists():
             inviteMessage.delete()
             return JsonResponse({'errno': 300013, 'msg': '用户已在团队中'})
         if user != now_user:
             # 当用户是在teamspace中看到申请
             nowuser_team = UserTeam.objects.get(user=now_user, team=team)
-            if nowuser_team.permission ==0:
+            if nowuser_team.permission == 0:
                 return JsonResponse({'errno': 300014, 'msg': '用户权限不够'})
         UserTeam.objects.create(user=user, team=team, permission=0)
         inviteMessage.delete()
@@ -328,10 +331,11 @@ def refuse_invite(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
 
 
+@csrf_exempt
 def search_team(request):
     if request.method == 'POST':
         name = request.POST.get('name')
-        teams = Team.objects.filter(teamname_icontains = name)
+        teams = Team.objects.filter(teamname_icontains=name)
         team_data = []
         for team in teams:
             team_data.append({
@@ -343,6 +347,7 @@ def search_team(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
 
 
+@csrf_exempt
 def apply_join(request):
     if request.method == 'POST':
         teamid = request.POST.get('teamid')
@@ -351,7 +356,7 @@ def apply_join(request):
         user = User.objects.get(userid=userid)
         messages = InviteMessage.objects.filter(user=user, team=team)
         if messages.exists():
-            return JsonResponse({'errno': 300012, 'msg':'申请已存在'})
+            return JsonResponse({'errno': 300012, 'msg': '申请已存在'})
         InviteMessage.objects.create(team=team, user=user)
         return JsonResponse({'errno': 0, 'msg': '申请已发送'})
     else:
@@ -362,7 +367,7 @@ def apply_join(request):
 def search_user(request):
     if request.method == 'POST':
         name = request.POST.get('name')
-        users = User.objects.filter(username_icontains = name)
+        users = User.objects.filter(username_icontains=name)
         user_data = []
         for user in users:
             user_data.append({
@@ -375,3 +380,12 @@ def search_user(request):
         return JsonResponse({'errno': 0, 'user_data': user_data})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def sendVerifyCode(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    email = request.POST.get('email')
+    returnVal = sendVerifyCodeMethod(email)
+    return JsonResponse({'errno': 0, 'msg': '验证码发送成功', 'code': returnVal})
