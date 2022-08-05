@@ -180,7 +180,8 @@ def teamspace(request):
         projdata.append({
             'proj_id': proj.projId,
             'proj_name': proj.projName,
-            'proj_photo': proj.photo.url
+            'proj_photo': proj.photo.url,
+            'proj_info': proj.projInfo
         })
     members = team.user_set.all()
     memberdata = []
