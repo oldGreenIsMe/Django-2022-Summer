@@ -8,7 +8,7 @@ from django.db.models.signals import pre_delete
 # 项目类
 class Project(models.Model):
     projId = models.AutoField(primary_key=True)
-    projName = models.CharField(max_length=50, unique=True)
+    projName = models.CharField(max_length=50)
     projCreator = models.ForeignKey(to=User, null=False, blank=False, on_delete=models.CASCADE, related_name='creator')
     projTeam = models.ForeignKey(to=Team, null=False, blank=False, on_delete=models.CASCADE)
     projInfo = models.TextField(default='暂无简介')
