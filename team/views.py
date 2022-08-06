@@ -402,4 +402,10 @@ def acceptInvitation(request):
     data = inviteMemberCheck(token)
     teamId = data['teamid']
     userId = data['userid']
+    team = Team.objects.get(teamid=teamId)
+    user = User.objects.get(userid=userId)
+    UserTeam.objects.create(user=user, team=team, permission=0)
+    invitations = InviteMessage.objects.filter(team=team, user=user)
+    for invitation in invitations:
+        invitation.delete()
     return render(request, 'jumpPage.html')
