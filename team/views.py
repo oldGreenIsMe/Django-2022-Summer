@@ -404,7 +404,8 @@ def acceptInvitation(request):
     userId = data['userid']
     team = Team.objects.get(teamid=teamId)
     user = User.objects.get(userid=userId)
-    UserTeam.objects.create(user=user, team=team, permission=0)
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        UserTeam.objects.create(user=user, team=team, permission=0)
     invitations = InviteMessage.objects.filter(team=team, user=user)
     for invitation in invitations:
         invitation.delete()

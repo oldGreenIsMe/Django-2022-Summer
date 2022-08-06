@@ -33,7 +33,7 @@ def sendVerifyCodeMethod(toEmail, mode):
     # message['To'] = Header('SHLPRN')
     mail = smtplib.SMTP()
     mail.connect("smtp.qq.com")
-    mail.login("805659773@qq.com", "etmhscregstlbdgg")
+    mail.login("805659773@qq.com", settings.SECRETS['email_key'])
     mail.sendmail("805659773@qq.com", [toEmail], message.as_string())
     return verifyCode
 
@@ -61,7 +61,7 @@ def inviteMemberSendMethod(invitorName, userName, userId, teamName, teamId, toEm
     message['From'] = Header('墨书团队')
     mail = smtplib.SMTP()
     mail.connect("smtp.qq.com")
-    mail.login("805659773@qq.com", "etmhscregstlbdgg")
+    mail.login("805659773@qq.com", settings.SECRETS['email_key'])
     mail.sendmail("805659773@qq.com", [toEmail], message.as_string())
 
 
