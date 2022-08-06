@@ -30,7 +30,7 @@ def sendVerifyCodeMethod(toEmail, mode):
         message = MIMEText(data, 'html', 'utf-8')
         message['Subject'] = Header('墨书账号修改密码验证码')
     message['From'] = Header('墨书团队')                    # 邮件发送者
-    # message['To'] = Header('SHLPRN')
+    message['To'] = Header(toEmail)
     mail = smtplib.SMTP()
     mail.connect("smtp.qq.com")
     mail.login("805659773@qq.com", settings.SECRETS['email_key'])
@@ -59,6 +59,7 @@ def inviteMemberSendMethod(invitorName, userName, userId, teamName, teamId, toEm
     message = MIMEText(msg, 'html', 'utf-8')
     message['Subject'] = Header('墨书团队邀请邮件')
     message['From'] = Header('墨书团队')
+    message['To'] = Header(toEmail)
     mail = smtplib.SMTP()
     mail.connect("smtp.qq.com")
     mail.login("805659773@qq.com", settings.SECRETS['email_key'])
