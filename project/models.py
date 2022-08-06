@@ -40,6 +40,11 @@ class File(models.Model):
     edit_file = models.ManyToManyField(User, through='UserFile')
 
 
+class FileImage(models.Model):
+    file = models.ForeignKey(to=File, null=False, blank=False, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='fileImg', storage=storage.ImageStorage)
+
+
 # 原型类
 class Prototype(models.Model):
     prototypeId = models.AutoField(primary_key=True)
@@ -52,12 +57,12 @@ class Prototype(models.Model):
     canvas_height = models.IntegerField(default=320)
 
 
-@receiver(pre_delete, sender=Project)
-def projPhotoDelete(instance, **kwargs):
-    instance.photo.delete(False)
-
-
 class UserFile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     file = models.ForeignKey(File, on_delete=models.CASCADE)
     status = models.IntegerField(default=0)     # 0不在编辑，1正在编辑
+
+
+@receiver(pre_delete, sender=Project)
+def projPhotoDelete(instance, **kwargs):
+    instance.photo.delete(False)

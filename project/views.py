@@ -421,6 +421,19 @@ def getFileContent(request):
 
 
 @csrf_exempt
+def upload_file_image(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    files = File.objects.filter(fileId=request.POST.get('file_id'))
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    image = request.FILES.get('image')
+    file_image = FileImage(file=files.first(), image=image)
+    file_image.save()
+    return JsonResponse({'errno': 0, 'msg': '上传图片成功', 'url': file_image.image.url})
+
+
+@csrf_exempt
 def edit_file(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
