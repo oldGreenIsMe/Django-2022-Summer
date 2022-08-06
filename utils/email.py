@@ -39,7 +39,7 @@ def sendVerifyCodeMethod(toEmail, mode):
 
 
 def inviteMemberSendMethod(invitorName, userName, userId, teamName, teamId, toEmail):
-    verifyUrl = "http://127.0.0.1:6060/api/team/acceptInvitation"
+    verifyUrl = "https://stcmp.shlprn.cn/api/team/acceptInvitation"
     data = {'teamid': teamId, 'userid': userId, 'team': teamName}
     header = {'alg': 'HS256'}
     key = settings.SECRETS['signing']['key']
