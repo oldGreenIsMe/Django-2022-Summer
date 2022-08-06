@@ -58,8 +58,8 @@ class Prototype(models.Model):
 
 
 class UserFile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    user = models.ForeignKey(to=User, on_delete=models.CASCADE)
+    file = models.ForeignKey(to=File, on_delete=models.CASCADE)
     status = models.IntegerField(default=0)     # 0不在编辑，1正在编辑
 
 

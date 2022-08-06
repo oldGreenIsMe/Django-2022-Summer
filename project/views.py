@@ -442,6 +442,7 @@ def edit_file(request):
     user = User.objects.filter(userid=userid).first()
     file = File.objects.filter(fileId=fileid).first()
     user_files = UserFile.objects.filter(user=user, file=file)
+    print(user_files)
     if not user_files.exists():
         return JsonResponse({'errno': 400010, 'msg': '文件或用户不存在'})
     status = request.POST.get('status')
