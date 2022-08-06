@@ -435,9 +435,6 @@ def edit_file(request):
     user_file = user_files.first()
     user_file.status = status
     user_file.save()
-    if status == 1:
-        return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 0})
-    # operation 0 不需要传回文件内容，1 需要传回文件内容
     user_files = UserFile.objects.filter(file=file)
     editors = []
     for i in user_files:
@@ -446,6 +443,12 @@ def edit_file(request):
     for editor in editors:
         if UserFile.objects.filter(user=editor, file=file).first().status == 1:
             num = num + 1
+    if status == 1:
+        if num == 1:
+            return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 2})
+        else:
+            return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 0})
+    # operation 0 不需要传回文件内容，1 需要传回文件内容，2 第一个用户需要获取文件内容
     if num == 0:
         return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 1})
     else:
