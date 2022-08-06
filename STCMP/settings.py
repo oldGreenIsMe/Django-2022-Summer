@@ -157,11 +157,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# 固定写法设置Email引擎
-"""EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.qq.com'  # 腾讯QQ邮箱SMTP服务器地址
-EMAIL_PORT = 25             # SMTP服务的端口号
-EMAIL_HOST_USER = '805659773@qq.com'
-EMAIL_HOST_PASSWORD = 'etmhscregstlbdgg'
-EMAIL_USE_TLS = False       # 与SMTP服务器通信时,是否启用安全模式"""

@@ -1,9 +1,10 @@
+from django.shortcuts import render
 from django.http import JsonResponse
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from team.models import *
+from utils.email import *
 from utils.token import create_token
-from utils.email import sendVerifyCodeMethod
-from project.models import *
 
 
 @csrf_exempt
@@ -111,8 +112,10 @@ def invite_user(request):
     if not users.exists():
         return JsonResponse({'errno': 300008, 'msg': '被邀请用户不存在'})
     user = users.first()
+    if UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 300013, 'msg': '被邀请用户已在团队中'})
     InviteMessage.objects.create(team=team, user=user, inviter=admin)
-
+    inviteMemberSendMethod(admin.username, user.username, user.userid, team.teamname, team.teamid, user.email)
     return JsonResponse({'errno': 0, 'msg': '用户邀请已发送'})
 
 
@@ -306,11 +309,6 @@ def accept_invite(request):
                 return JsonResponse({'errno': 300014, 'msg': '用户权限不够'})
         UserTeam.objects.create(user=user, team=team, permission=0)
         inviteMessage.delete()
-        projs = Project.objects.filter(projTeam=team)
-        for proj in projs:
-            files = File.objects.filter(projectId=proj)
-            for file in files:
-                UserFile.objects.create(file=file, user=user)
         msg = user.username + '加入团队成功'
         return JsonResponse({'errno': 0, 'msg': msg})
     else:
@@ -393,5 +391,22 @@ def sendVerifyCode(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     email = request.POST.get('email')
-    returnVal = sendVerifyCodeMethod(email)
+    judge = int(request.POST.get('judge'))
+    returnVal = sendVerifyCodeMethod(email, judge)
     return JsonResponse({'errno': 0, 'msg': '验证码发送成功', 'code': returnVal})
+
+
+@csrf_exempt
+def acceptInvitation(request):
+    token = request.GET.get('token')
+    data = inviteMemberCheck(token)
+    teamId = data['teamid']
+    userId = data['userid']
+    team = Team.objects.get(teamid=teamId)
+    user = User.objects.get(userid=userId)
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        UserTeam.objects.create(user=user, team=team, permission=0)
+    invitations = InviteMessage.objects.filter(team=team, user=user)
+    for invitation in invitations:
+        invitation.delete()
+    return render(request, 'jumpPage.html')

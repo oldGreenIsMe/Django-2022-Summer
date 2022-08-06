@@ -7,7 +7,7 @@ except ImportError:
     MiddlewareMixin = object
 
 
-API_WHITELIST = ["/api/team/register", "/api/team/login", "/api/team/sendVerifyCode"]
+API_WHITELIST = ["/api/team/register", "/api/team/login", "/api/team/sendVerifyCode", "/api/team/acceptInvitation"]
 
 
 class AuthorizeMiddleware(MiddlewareMixin):
