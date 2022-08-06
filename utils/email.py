@@ -40,7 +40,7 @@ def sendVerifyCodeMethod(toEmail, mode):
 
 def inviteMemberSendMethod(invitorName, userName, userId, teamName, teamId, toEmail):
     verifyUrl = "https://stcmp.shlprn.cn/api/team/acceptInvitation"
-    data = {'teamid': teamId, 'userid': userId, 'team': teamName}
+    data = {'teamid': teamId, 'userid': userId}
     header = {'alg': 'HS256'}
     key = settings.SECRETS['signing']['key']
     token = jwt.encode(header=header, payload=data, key=key)
@@ -70,3 +70,31 @@ def inviteMemberCheck(token):
     key = settings.SECRETS['signing']['key']
     data = jwt.decode(token, key)
     return data
+
+
+def applyJoinMethod(adminName, userName, userId, teamName, teamId, toEmail):
+    verifyUrl = "https://stcmp.shlprn.cn/api/team/consentApplication"
+    data = {'teamid': teamId, 'userid': userId}
+    header = {'alg': 'HS256'}
+    key = settings.SECRETS['signing']['key']
+    token = jwt.encode(header=header, payload=data, key=key)
+    dstUrl = verifyUrl + '?token=' + token.decode()
+    with open("./utils/applyJoin/applyJoin1.html", 'r', encoding='utf-8') as f:
+        input1 = f.read()
+    with open("./utils/applyJoin/applyJoin2.html", 'r', encoding='utf-8') as f:
+        input2 = f.read()
+    with open("./utils/applyJoin/applyJoin3.html", 'r', encoding='utf-8') as f:
+        input3 = f.read()
+    with open("./utils/applyJoin/applyJoin4.html", 'r', encoding='utf-8') as f:
+        input4 = f.read()
+    with open("./utils/applyJoin/applyJoin5.html", 'r', encoding='utf-8') as f:
+        input5 = f.read()
+    msg = input1 + adminName + input2 + userName + input3 + teamName + input4 + dstUrl + input5
+    message = MIMEText(msg, 'html', 'utf-8')
+    message['Subject'] = Header('墨书申请加入团队邮件')
+    message['From'] = Header('墨书团队')
+    message['To'] = Header(toEmail)
+    mail = smtplib.SMTP()
+    mail.connect("smtp.qq.com")
+    mail.login("805659773@qq.com", settings.SECRETS['email_key'])
+    mail.sendmail("805659773@qq.com", [toEmail], message.as_string())

@@ -114,7 +114,7 @@ def invite_user(request):
     user = users.first()
     if UserTeam.objects.filter(user=user, team=team).exists():
         return JsonResponse({'errno': 300013, 'msg': '被邀请用户已在团队中'})
-    InviteMessage.objects.create(team=team, user=user, inviter=admin)
+    InviteMessage.objects.create(team=team, user=user, inviter=admin, timeOrder=timezone.now())
     inviteMemberSendMethod(admin.username, user.username, user.userid, team.teamname, team.teamid, user.email)
     return JsonResponse({'errno': 0, 'msg': '用户邀请已发送'})
 
@@ -409,4 +409,8 @@ def acceptInvitation(request):
     invitations = InviteMessage.objects.filter(team=team, user=user)
     for invitation in invitations:
         invitation.delete()
-    return render(request, 'jumpPage.html')
+    return render(request, 'jumpPage1.html')
+
+
+# @csrf_exempt
+# def consentApplication(request):

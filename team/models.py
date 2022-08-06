@@ -31,6 +31,10 @@ class InviteMessage(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     inviter = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='inviter_message')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_message')
+    timeOrder = models.DateTimeField(null=True, blank=True)     # 用于排列信息的顺序
+    type = models.IntegerField(default=1)                       # 信息类型 1-邀请 2-申请 3-删除
+    status = models.IntegerField(default=1)                     # 信息状态 1-待处理 2-接受 3-拒绝
+    readStatus = models.IntegerField(default=1)                 # 信息（处理结果）对请求发出者是否已读 1-未读 2-已读
 
 
 @receiver(pre_delete, sender=User)
