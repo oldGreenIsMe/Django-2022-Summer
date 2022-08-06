@@ -456,7 +456,7 @@ def edit_file(request):
     for editor in editors:
         if UserFile.objects.filter(user=editor, file=file).first().status == 1:
             num = num + 1
-    if status == 1:
+    if int(status) == 1:
         if num == 1:
             return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 2})
         else:
