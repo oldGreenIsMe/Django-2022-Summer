@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from project.models import *
 from team.models import *
+import datetime
 
 
 @csrf_exempt
@@ -18,12 +19,13 @@ def createProj(request):
     if projInfo is None or projInfo == "":
         projInfo = "暂无简介"
     startTime = request.POST.get('start_time')
+    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M')
     endTime = request.POST.get('end_time')
     projects = Project.objects.filter(projName=projName, projTeam=projTeam)
     if projects.exists():
         return JsonResponse({'errno': 400001, 'msg': '项目名称重复'})
     project = Project(projName=projName, projCreator=user, projTeam=projTeam, projInfo=projInfo, startTime=startTime,
-                      endTime=endTime, deletePerson=None, deleteTime=None)
+                      endTime=endTime, deletePerson=None, deleteTime=None, startTimeRecord=startTimeRecord)
     project.save()
     return JsonResponse({'errno': 0, 'msg': '项目创建成功', 'proj_id': project.projId})
 
@@ -59,6 +61,7 @@ def modifyProjInfo(request):
     if projInfo is None or projInfo == "":
         projInfo = "暂无简介"
     startTime = request.POST.get('start_time')
+    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M')
     endTime = request.POST.get('end_time')
     projects = Project.objects.filter(projName=projName, projTeam=project.projTeam)
     if projects.exists() and projects.first() != project:
@@ -67,6 +70,7 @@ def modifyProjInfo(request):
     project.projInfo = projInfo
     project.startTime = startTime
     project.endTime = endTime
+    project.startTimeRecord = startTimeRecord
     project.save()
     return JsonResponse({'errno': 0, 'msg': '项目信息修改成功'})
 
@@ -158,7 +162,7 @@ def detailProj(request):
         )
     print(members)
     return JsonResponse({'errno': 0, 'msg': '查看成功', 'proj_name': proj_name, 'proj_creator': creator.username,
-                         'proj_start': start, 'proj_end': end, 'proj_team': team.teamname,
+                         'proj_start': start, 'proj_end': end, 'proj_team': team.teamname, 'proj_team_id': team.teamid,
                          'proj_info': info, 'members': members, 'proj_photo': proj.photo.url})
 
 
@@ -521,5 +525,75 @@ def file_center(request):
                 'files_data': files_data
             })
         return JsonResponse({'errno': 0, 'data': projects_data})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def search_user_project(request):
+    if request.method == 'POST':
+        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        projName = request.POST.get('projName')
+        teams = user.team_belonged.all()
+        data = []
+        for team in teams:
+            projects = Project.objects.filter(projTeam=team, status=1, projName__icontains=projName)
+            for project in projects:
+                data.append({
+                    'projName': project.projName,
+                    'projId': project.projId,
+                    'photo': project.photo
+                })
+        return JsonResponse({'errno': 0, 'data': data})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def search_team_project(request):
+    if request.method == 'POST':
+        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        projName = request.POST.get('projName')
+        team = Team.objects.get(teamid=request.POST.get('teamid'))
+        projects = Project.objects.filter(projTeam=team, status=1, projName__icontains=projName)
+        data = []
+        for project in projects:
+            data.append({
+                'projName': project.projName,
+                'projId': project.projId,
+                'photo': project.photo
+            })
+        return JsonResponse({'errno': 0, 'data': data})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def project_order(request):
+    if request.method == 'POST':
+        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        according = request.POST.get('according')
+        team = Team.objects.filter(teamid=request.POST.get('teamid'))
+        if according == '创建时间从早到晚':
+            projects = Project.objects.filter(projTeam=team, status=1).order_by('projId')
+        elif according == '创建时间从晚到早':
+            projects = Project.objects.filter(projTeam=team, status=1).order_by('-projId')
+        elif according == '名称字典序正序':
+            projects = Project.objects.filter(projTeam=team, status=1).order_by('projName')
+        elif according == '名称字典序倒序':
+            projects = Project.objects.filter(projTeam=team, status=1).order_by('-projName')
+        elif according == '开始时间从早到晚':
+            projects = Project.objects.filter(projTeam=team, status=1).order_by('startTimeRecord')
+        elif according == '开始时间从晚到早':
+            projects = Project.objects.filter(projTeam=team, status=1).order_by('-startTimeRecord')
+        data = []
+        for project in projects:
+            data.append({
+                'projId': project.projId,
+                'projName': project.projName,
+                'startTime': project.startTime,
+                'photo': project.photo
+            })
+        return JsonResponse({'errno': 0, 'data': data})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
