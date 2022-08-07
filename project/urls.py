@@ -25,4 +25,5 @@ urlpatterns = {
     path('getFileContent', getFileContent),
     path('edit_file', edit_file),
     path('upload_file_image', upload_file_image),
+    path('file_center')
 }
