@@ -466,3 +466,29 @@ def edit_file(request):
         return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 1})
     else:
         return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 0})
+
+
+@csrf_exempt
+def file_center(request):
+    if request.method == 'POST':
+        userid = request.META.get('HTTP_USREID')
+        teamid = request.POST.get('teamid')
+        team = Team.objects.filter(teamid=teamid)
+        projects = Project.objects.filter(projTeam=team)
+        projects_data = []
+        for project in projects:
+            files_data = []
+            files = File.objects.filter(projectId=project)
+            for file in files:
+                files_data.append({
+                    'fileId': file.fileId,
+                    'fileName': file.fileName
+                })
+            projects_data.append({
+                'projectId': project.projId,
+                'projName': project.projName,
+                'files_data': files_data
+            })
+        return JsonResponse({'errno': 0, 'data': projects_data})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
