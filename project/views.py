@@ -314,24 +314,27 @@ def createFile(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     fileName = request.POST.get('file_name')
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    team = Team.objects.get(teamid=request.POST.get('teamid'))
     createTime = request.POST.get('create_time')
-    projects = Project.objects.filter(projId=request.POST.get('proj_id'))
-    if not projects.exists():
-        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
-    project = projects.first()
-    files = File.objects.filter(projectId=project.projId, fileName=fileName)
-    if files.first() is not None:
-        return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
-    file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
-                lastEditUser=user, projectId=project)
-    file.save()
-    team = project.projTeam
-    user_teams = UserTeam.objects.filter(team=team)
-    users = []
-    for i in user_teams:
-        users.append(i.user)
-    for u in users:
-        UserFile.objects.create(user=u, file=file)
+    judge = request.POST.get('judge')
+    if judge == 0:   # 建立项目文档
+        projects = Project.objects.filter(projId=request.POST.get('proj_id'))
+        if not projects.exists():
+            return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+        project = projects.first()
+        files = File.objects.filter(projectId=project.projId, fileName=fileName)
+        if files.first() is not None:
+            return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
+        file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
+                    lastEditUser=user, projectId=project, judge=0, fileTeam=team)
+        file.save()
+    else:           # 建立团队文档
+        files = File.objects.filter(fileTeam=team, judge=1, fileName=fileName)
+        if files.first() is not None:
+            return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
+        file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
+                    lastEditUser=user, judge=1, fileTeam=team)
+        file.save()
     return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
 
 
@@ -369,18 +372,26 @@ def modifyFile(request):
 def renameFile(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    projects = Project.objects.filter(projId=request.POST.get('proj_id'))
-    if not projects.exists():
-        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
-    project = projects.first()
     files = File.objects.filter(fileId=request.POST.get('file_id'))
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    judge = file.judge
+    if judge == 0:
+        projects = Project.objects.filter(projId=request.POST.get('proj_id'))
+        if not projects.exists():
+            return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+        project = projects.first()
     fileName = request.POST.get('file_name')
-    files = File.objects.filter(projectId=project.projId, fileName=fileName)
-    if files.first() is not None:
-        return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
+    if judge == 0:
+        files = File.objects.filter(projectId=project.projId, fileName=fileName, judge=0)
+        if files.first() is not None:
+            return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
+    else:
+        team = Team.objects.get(teamid=request.POST.get('teamid'))
+        files = File.objects.filter(fileTeam=team, fileName=fileName, judge=1)
+        if files.first() is not None:
+            return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
     file.fileName = fileName
     file.save()
     return JsonResponse({'errno': 0, 'msg': '文档重命名成功'})
@@ -473,12 +484,19 @@ def file_center(request):
     if request.method == 'POST':
         userid = request.META.get('HTTP_USREID')
         teamid = request.POST.get('teamid')
-        team = Team.objects.filter(teamid=teamid)
+        team = Team.objects.get(teamid=teamid)
+        team_files = File.object.filter(fileTeam=team, judge=1)
+        team_data = []
+        for team_file in team_files:
+            team_data.append({
+                'fileId': team_file.fileId,
+                'fileName': team_file.fileName
+            })
         projects = Project.objects.filter(projTeam=team)
         projects_data = []
         for project in projects:
             files_data = []
-            files = File.objects.filter(projectId=project)
+            files = File.objects.filter(projectId=project, judge=0)
             for file in files:
                 files_data.append({
                     'fileId': file.fileId,
@@ -489,6 +507,6 @@ def file_center(request):
                 'projName': project.projName,
                 'files_data': files_data
             })
-        return JsonResponse({'errno': 0, 'data': projects_data})
+        return JsonResponse({'errno': 0, 'projects_file': projects_data, 'team_file': team_data})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
