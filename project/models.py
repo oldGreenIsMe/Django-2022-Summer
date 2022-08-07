@@ -13,6 +13,7 @@ class Project(models.Model):
     projTeam = models.ForeignKey(to=Team, null=False, blank=False, on_delete=models.CASCADE)
     projInfo = models.TextField(default='暂无简介')
     startTime = models.CharField(max_length=20, null=True, blank=True)
+    startTimeRecord = models.DateTimeField(null=True, blank=True)
     endTime = models.CharField(max_length=20, null=True, blank=True)
     # 用于判断是否被删除到回收站中 1-未被删除 2-回收站中
     status = models.IntegerField(default=1)
