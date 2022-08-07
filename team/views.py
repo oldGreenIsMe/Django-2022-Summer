@@ -21,9 +21,6 @@ def register(request):
             return JsonResponse({'errno': 300002, 'msg': '两次输入的密码不一致'})
         if username == '' or truename == '':
             return JsonResponse({'errno': 300001, 'msg': '昵称与真实姓名不能为空'})
-        users = User.objects.filter(email=email)
-        if users.exists():
-            return JsonResponse({'errno': 300007, 'msg': '邮箱已注册'})
         user = User.objects.create(username=username, password=password_1, truename=truename, email=email)
         return JsonResponse({'errno': 0, 'msg': '注册成功', 'userid': user.userid})
     else:
@@ -379,6 +376,9 @@ def sendVerifyCode(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     email = request.POST.get('email')
+    users = User.objects.filter(email=email)
+    if users.exists():
+        return JsonResponse({'errno': 300007, 'msg': '邮箱已注册'})
     judge = int(request.POST.get('judge'))
     returnVal = sendVerifyCodeMethod(email, judge)
     return JsonResponse({'errno': 0, 'msg': '验证码发送成功', 'code': returnVal})
