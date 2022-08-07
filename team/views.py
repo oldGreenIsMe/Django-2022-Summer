@@ -310,6 +310,7 @@ def handleInvitation(request):
             for invitation in invitationList:
                 invitation.timeOrder = nowTime
                 invitation.status = type + 1
+                invitation.save()
         inviteMessage.timeOrder = nowTime
         inviteMessage.status = type + 1
         inviteMessage.save()
@@ -404,10 +405,12 @@ def acceptInvitation(request):
         invitation = InviteMessage.objects.get(user=user, team=team, type=1, status=1)
         invitation.timeOrder = nowTime
         invitation.status = 2
+        invitation.save()
         return render(request, 'jumpPage1.html')
     else:
         invitationList = InviteMessage.objects.filter(user=user, team=team, type=2, status=1)
         for invitation in invitationList:
             invitation.timeOrder = nowTime
             invitation.status = 2
+            invitation.save()
         return render(request, 'jumpPage2.html')
