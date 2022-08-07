@@ -571,6 +571,7 @@ def search_team_project(request):
 @csrf_exempt
 def project_order(request):
     if request.method == 'POST':
+        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
         according = request.POST.get('according')
         team = Team.objects.filter(teamid=request.POST.get('teamid'))
         if according == '创建时间从早到晚':
