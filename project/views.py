@@ -269,7 +269,8 @@ def get_proto(request):
     proto_content = proto.protoContent
     canvas_width = proto.canvas_width
     canvas_height = proto.canvas_height
-    return JsonResponse({'errno': 0, 'msg': '获取成功', 'proto_content': proto_content, 'canvas_width': canvas_width, 'canvas_height': canvas_height})
+    return JsonResponse({'errno': 0, 'msg': '获取成功', 'proto_content': proto_content, 'canvas_width': canvas_width,
+                         'canvas_height': canvas_height})
 
 
 @csrf_exempt
@@ -408,13 +409,12 @@ def renameFile(request):
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
     judge = file.judge
+    fileName = request.POST.get('file_name')
     if judge == 0:
         projects = Project.objects.filter(projId=request.POST.get('proj_id'))
         if not projects.exists():
             return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
         project = projects.first()
-    fileName = request.POST.get('file_name')
-    if judge == 0:
         files = File.objects.filter(projectId=project.projId, fileName=fileName, judge=0)
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
@@ -495,7 +495,7 @@ def edit_file(request):
 @csrf_exempt
 def file_center(request):
     if request.method == 'POST':
-        userid = request.META.get('HTTP_USREID')
+        request.META.get('HTTP_USREID')
         teamid = request.POST.get('teamid')
         team = Team.objects.get(teamid=teamid)
         team_files = File.object.filter(fileTeam=team, judge=1)
