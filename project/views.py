@@ -158,7 +158,7 @@ def detailProj(request):
         )
     print(members)
     return JsonResponse({'errno': 0, 'msg': '查看成功', 'proj_name': proj_name, 'proj_creator': creator.username,
-                         'proj_start': start, 'proj_end': end, 'proj_team': team.teamname,
+                         'proj_start': start, 'proj_end': end, 'proj_team': team.teamname, 'proj_team_id': team.teamid,
                          'proj_info': info, 'members': members, 'proj_photo': proj.photo.url})
 
 
@@ -521,5 +521,68 @@ def file_center(request):
                 'files_data': files_data
             })
         return JsonResponse({'errno': 0, 'data': projects_data})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def search_user_project(request):
+    if request.method == 'POST':
+        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        projName = request.POST.get('projName')
+        teams = user.team_belonged.all()
+        data = []
+        for team in teams:
+            projects = Project.objects.filter(projTeam=team, status=1, projName__icontains=projName)
+            for project in projects:
+                data.append({
+                    'projName': project.projName,
+                    'projId': project.projId,
+                    'photo': project.photo
+                })
+        return JsonResponse({'errno': 0, 'data': data})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def search_team_project(request):
+    if request.method == 'POST':
+        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        projName = request.POST.get('projName')
+        team = Team.objects.get(teamid=request.POST.get('teamid'))
+        projects = Project.objects.filter(projTeam=team, status=1, projName__icontains=projName)
+        data = []
+        for project in projects:
+            data.append({
+                'projName': project.projName,
+                'projId': project.projId,
+                'photo': project.photo
+            })
+        return JsonResponse({'errno': 0, 'data': data})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def project_order(request):
+    if request.method == 'POST':
+        according = request.POST.get('according')
+        team = Team.objects.filter(teamid=request.POST.get('teamid'))
+        if according == '创建时间从早到晚':
+            projects = Project.objects.filter(projTeam=team, status=1).order_by('projId')
+        elif according == '创建时间从晚到早':
+            projects = Project.objects.filter(projTeam=team, status=1).order_by('-projId')
+        elif according == '名称':
+            projects = Project.objects.filter(projTeam=team, status=1).order_by('projName')
+        data = []
+        for project in projects:
+            data.append({
+                'projId': project.projId,
+                'projName': project.projName,
+                'startTime': project.startTime,
+                'photo': project.photo
+            })
+        return JsonResponse({'errno': 0, 'data': data})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})

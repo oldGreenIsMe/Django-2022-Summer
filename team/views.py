@@ -320,7 +320,7 @@ def handleInvitation(request):
 def search_team(request):
     if request.method == 'POST':
         name = request.POST.get('name')
-        teams = Team.objects.filter(teamname_icontains=name)
+        teams = Team.objects.filter(teamname__icontains=name)
         team_data = []
         for team in teams:
             team_data.append({
@@ -356,7 +356,7 @@ def apply_join(request):
 def search_user(request):
     if request.method == 'POST':
         name = request.POST.get('name')
-        users = User.objects.filter(username_icontains=name)
+        users = User.objects.filter(username__icontains=name)
         user_data = []
         for user in users:
             user_data.append({
