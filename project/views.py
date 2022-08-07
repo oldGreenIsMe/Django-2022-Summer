@@ -269,8 +269,7 @@ def get_proto(request):
     proto_content = proto.protoContent
     canvas_width = proto.canvas_width
     canvas_height = proto.canvas_height
-    return JsonResponse({'errno': 0, 'msg': '获取成功', 'proto_content': proto_content, 'canvas_width': canvas_width,
-                         'canvas_height': canvas_height})
+    return JsonResponse({'errno': 0, 'msg': '获取成功', 'proto_content': proto_content, 'canvas_width': canvas_width, 'canvas_height': canvas_height})
 
 
 @csrf_exempt
@@ -356,9 +355,8 @@ def createFile(request):
     files = File.objects.filter(projectId=project.projId, fileName=fileName)
     if files.first() is not None:
         return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
-    file_model = request.POST.get('model')
     file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
-                lastEditUser=user, projectId=project, file_model=file_model)
+                lastEditUser=user, projectId=project)
     file.save()
     team = project.projTeam
     user_teams = UserTeam.objects.filter(team=team)
@@ -477,21 +475,12 @@ def edit_file(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
-    if file.new == 1 or file.new == 2:
+    if file.new == 1:
         file.new = 0
         file.save()
-        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': file.new, 'model': file.file_model})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1})
     else:
-        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': file.new, 'model': file.file_model})
-
-
-@csrf_exempt
-def get_file_model(request):
-    if request.method != 'POST':
-        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    model_id = request.POST.get('model_id')
-    model = FileModel.objects.filter(model_id=model_id).first()
-    return JsonResponse({'errno': 0, 'msg': '获取文件模板成功', 'model': model.model_content})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 0})
 
 
 @csrf_exempt
