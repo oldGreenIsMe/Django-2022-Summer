@@ -39,8 +39,8 @@ def sendVerifyCodeMethod(toEmail, mode):
 
 
 def inviteMemberSendMethod(invitorName, userName, userId, teamName, teamId, toEmail):
-    verifyUrl = "https://stcmp.shlprn.cn/api/team/acceptInvitation"
-    data = {'teamid': teamId, 'userid': userId}
+    verifyUrl = "http://stcmp.shlprn.cn/api/team/acceptInvitation"
+    data = {'teamid': teamId, 'userid': userId, 'judge': 1}
     header = {'alg': 'HS256'}
     key = settings.SECRETS['signing']['key']
     token = jwt.encode(header=header, payload=data, key=key)
@@ -73,8 +73,8 @@ def inviteMemberCheck(token):
 
 
 def applyJoinMethod(adminName, userName, userId, teamName, teamId, toEmail):
-    verifyUrl = "https://stcmp.shlprn.cn/api/team/consentApplication"
-    data = {'teamid': teamId, 'userid': userId}
+    verifyUrl = "http://stcmp.shlprn.cn/api/team/acceptInvitation"
+    data = {'teamid': teamId, 'userid': userId, 'judge': 2}
     header = {'alg': 'HS256'}
     key = settings.SECRETS['signing']['key']
     token = jwt.encode(header=header, payload=data, key=key)

@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.utils import timezone
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -115,6 +116,8 @@ def invite_user(request):
     user = users.first()
     if UserTeam.objects.filter(user=user, team=team).exists():
         return JsonResponse({'errno': 300013, 'msg': '被邀请用户已在团队中'})
+    if InviteMessage.objects.filter(user=user, team=team, status=1).exists():
+        return JsonResponse({'errno': 300012, 'msg': '邀请或申请已存在'})
     InviteMessage.objects.create(team=team, user=user, inviter=admin, timeOrder=timezone.now())
     inviteMemberSendMethod(admin.username, user.username, user.userid, team.teamname, team.teamid, user.email)
     return JsonResponse({'errno': 0, 'msg': '用户邀请已发送'})
@@ -292,46 +295,23 @@ def delete_team(request):
 
 
 @csrf_exempt
-def accept_invite(request):
+def handleInvitation(request):
     if request.method == 'POST':
         inviteId = request.POST.get('inviteId')
         inviteMessage = InviteMessage.objects.get(inviteId=inviteId)
-        now_user = User.objects.get(userid=request.META.get('HTTP_USERID'))
         user = inviteMessage.user
         team = inviteMessage.team
-        user_teams = UserTeam.objects.filter(user=user, team=team)
-        if user_teams.exists():
-            inviteMessage.delete()
-            return JsonResponse({'errno': 300013, 'msg': '用户已在团队中'})
-        if user != now_user:
-            # 当用户是在teamspace中看到申请
-            nowuser_team = UserTeam.objects.get(user=now_user, team=team)
-            if nowuser_team.permission == 0:
-                return JsonResponse({'errno': 300014, 'msg': '用户权限不够'})
+        type = request.POST.get('type')
         UserTeam.objects.create(user=user, team=team, permission=0)
-        inviteMessage.delete()
-        msg = user.username + '加入团队成功'
-        return JsonResponse({'errno': 0, 'msg': msg})
-    else:
-        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-
-
-@csrf_exempt
-def refuse_invite(request):
-    if request.method == 'POST':
-        inviteId = request.POST.get('inviteId')
-        inviteMessages = InviteMessage.objects.filter(inviteId=inviteId)
-        if not inviteMessages.exists():
-            return JsonResponse({'errno': 300011, 'msg': '邀请信息已失效'})
-        inviteMessage = inviteMessages.first()
-        now_user = User.objects.get(userid=request.META.get('HTTP_USERID'))
-        if now_user != inviteMessage.user:
-            # 当用户是在teamspace中看到申请
-            nowuser_team = UserTeam.objects.get(user=now_user, team=inviteMessage.team)
-            if nowuser_team.permission == 0:
-                return JsonResponse({'errno': 300014, 'msg': '用户权限不够'})
-        inviteMessage.delete()
-        return JsonResponse({'errno': 0, 'msg': '邀请已删除'})
+        nowTime = timezone.now()
+        if type == 2:
+            invitationList = InviteMessage.objects.filter(user=user, team=team, type=2, status=1)
+            for invitation in invitationList:
+                invitation.timeOrder = nowTime
+                invitation.status = type + 1
+        inviteMessage.timeOrder = nowTime
+        inviteMessage.status = type + 1
+        return JsonResponse({'errno': 0, 'msg': '请求处理成功'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
 
@@ -359,10 +339,14 @@ def apply_join(request):
         team = Team.objects.get(teamid=teamid)
         userid = request.META.get('HTTP_USERID')
         user = User.objects.get(userid=userid)
-        messages = InviteMessage.objects.filter(user=user, team=team)
-        if messages.exists():
-            return JsonResponse({'errno': 300012, 'msg': '申请已存在'})
-        InviteMessage.objects.create(team=team, user=user)
+        if InviteMessage.objects.filter(user=user, team=team, status=1).filter(Q(type=1) | Q(type=2)).exists():
+            return JsonResponse({'errno': 300012, 'msg': '邀请或申请已存在'})
+        userTeamList = UserTeam.objects.filter(team=team).filter(Q(permission=1) | Q(permission=2))
+        nowTime = timezone.now()
+        for userTeam in userTeamList:
+            applyJoinMethod(userTeam.user.username, user.username, user.userid, team.teamname, team.teamid,
+                            userTeam.user.email)
+            InviteMessage.objects.create(team=team, inviter=userTeam.user, user=user, timeOrder=nowTime, type=2)
         return JsonResponse({'errno': 0, 'msg': '申请已发送'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
@@ -403,15 +387,20 @@ def acceptInvitation(request):
     data = inviteMemberCheck(token)
     teamId = data['teamid']
     userId = data['userid']
+    judge = data['judge']
     team = Team.objects.get(teamid=teamId)
     user = User.objects.get(userid=userId)
     if not UserTeam.objects.filter(user=user, team=team).exists():
         UserTeam.objects.create(user=user, team=team, permission=0)
-    invitations = InviteMessage.objects.filter(team=team, user=user)
-    for invitation in invitations:
-        invitation.delete()
-    return render(request, 'jumpPage1.html')
-
-
-# @csrf_exempt
-# def consentApplication(request):
+    nowTime = timezone.now()
+    if judge == 1:
+        invitation = InviteMessage.objects.get(user=user, team=team, type=1, status=1)
+        invitation.timeOrder = nowTime
+        invitation.status = 2
+        return render(request, 'jumpPage1.html')
+    else:
+        invitationList = InviteMessage.objects.filter(user=user, team=team, type=2, status=1)
+        for invitation in invitationList:
+            invitation.timeOrder = nowTime
+            invitation.status = 2
+        return render(request, 'jumpPage2.html')
