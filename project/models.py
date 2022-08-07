@@ -22,6 +22,7 @@ class Project(models.Model):
     deleteTime = models.CharField(max_length=20, null=True, blank=True)
     deleteTimeRecord = models.DateTimeField(null=True, blank=True)
     photo = models.ImageField(upload_to='projImg', default='projImg/default.png', storage=storage.ImageStorage())
+    copy_num = models.IntegerField(default=0)
 
 
 # 文档类
@@ -38,6 +39,10 @@ class File(models.Model):
     lastEditTimeRecord = models.DateTimeField(auto_now=True)
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
     edit_file = models.ManyToManyField(User, through='UserFile')
+    judge = models.IntegerField(default=0)          # 0是项目文档，1是团队文档
+    fileTeam = models.ForeignKey(to=Team, null=True, on_delete=models.CASCADE, related_name='fileTeam')
+    new = models.IntegerField(default=1)
+    file_model = models.IntegerField(default=0)
 
 
 class FileImage(models.Model):
@@ -61,6 +66,11 @@ class UserFile(models.Model):
     user = models.ForeignKey(to=User, on_delete=models.CASCADE)
     file = models.ForeignKey(to=File, on_delete=models.CASCADE)
     status = models.IntegerField(default=0)     # 0不在编辑，1正在编辑
+
+
+class FileModel(models.Model):
+    model_id = models.AutoField(primary_key=True)
+    model_content = models.TextField(null=True, blank=True)
 
 
 @receiver(pre_delete, sender=Project)
