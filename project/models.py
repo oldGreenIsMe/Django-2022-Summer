@@ -36,8 +36,10 @@ class File(models.Model):
     lastEditUser = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE,
                                      related_name='lastEditUser')
     lastEditTimeRecord = models.DateTimeField(auto_now=True)
-    projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
+    projectId = models.ForeignKey(to=Project, null=True, blank=False, on_delete=models.CASCADE)
     edit_file = models.ManyToManyField(User, through='UserFile')
+    judge = models.IntegerField(default=0)          # 0是项目文档，1是团队文档
+    fileTeam = models.ForeignKey(to=Team, null=True, on_delete=models.CASCADE, related_name='fileTeam')
 
 
 class FileImage(models.Model):
