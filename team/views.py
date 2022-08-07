@@ -301,16 +301,18 @@ def handleInvitation(request):
         inviteMessage = InviteMessage.objects.get(inviteId=inviteId)
         user = inviteMessage.user
         team = inviteMessage.team
-        type = request.POST.get('type')
-        UserTeam.objects.create(user=user, team=team, permission=0)
+        type = int(request.POST.get('type'))
+        if type == 1 and not UserTeam.objects.filter(user=user, team=team).exists():
+            UserTeam.objects.create(user=user, team=team, permission=0)
         nowTime = timezone.now()
-        if type == 2:
+        if inviteMessage.type == 2:
             invitationList = InviteMessage.objects.filter(user=user, team=team, type=2, status=1)
             for invitation in invitationList:
                 invitation.timeOrder = nowTime
                 invitation.status = type + 1
         inviteMessage.timeOrder = nowTime
         inviteMessage.status = type + 1
+        inviteMessage.save()
         return JsonResponse({'errno': 0, 'msg': '请求处理成功'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
@@ -392,6 +394,11 @@ def acceptInvitation(request):
     user = User.objects.get(userid=userId)
     if not UserTeam.objects.filter(user=user, team=team).exists():
         UserTeam.objects.create(user=user, team=team, permission=0)
+    else:
+        if judge == 1:
+            return render(request, 'jumpPage1.html')
+        else:
+            return render(request, 'jumpPage2.html')
     nowTime = timezone.now()
     if judge == 1:
         invitation = InviteMessage.objects.get(user=user, team=team, type=1, status=1)
