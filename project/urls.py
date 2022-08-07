@@ -10,6 +10,7 @@ urlpatterns = {
     path('getDeletedProjList', getDeletedProjList),
     path('recover', recoverProj),
     path('detail', detailProj),
+    path('copy_project', copy_project),
     path('create_proto', create_proto),
     path('upload_proto', upload_proto),
     path('upload_proto_photo', upload_proto_photo),
