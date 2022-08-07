@@ -1,3 +1,4 @@
+import datetime
 from django.db.models import Q
 from django.utils import timezone
 from django.shortcuts import render
@@ -6,6 +7,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from team.models import *
 from utils.email import *
+from project.models import *
 from utils.token import create_token
 
 
@@ -414,3 +416,119 @@ def acceptInvitation(request):
             invitation.status = 2
             invitation.save()
         return render(request, 'jumpPage2.html')
+
+
+@csrf_exempt
+def createFolder(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    team = Team.objects.get(teamid=request.POST.get('team_id'))
+    isRoot = request.POST.get('is_root')
+    fatherFolder = None
+    folderName = request.POST.get('folder_name')
+    if isRoot != 1:
+        fatherFolder = Folder.objects.get(folderId=request.POST.get('father_id'))
+    if Folder.objects.filter(folderTeam=team, folderName=folderName, fatherFolder=fatherFolder).exists():
+        return JsonResponse({'errno': 700001, 'msg': '文件夹名称重复'})
+    createTime = datetime.datetime.strptime(request.POST.get('create_time'), '%Y-%m-%d %H:%M')
+    Folder.objects.create(folderTeam=team, folderName=folderName, isRoot=isRoot, fatherFolder=fatherFolder,
+                          folderCreator=user, createTime=createTime, lastEditTime=createTime)
+    return JsonResponse({'errno': 0, 'msg': '文件夹创建成功'})
+
+
+@csrf_exempt
+def renameFolder(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    folderId = request.POST.get('folder_id')
+    folderName = request.POST.get('folder_name')
+    team = Team.objects.get(teamid=request.POST.get('team_id'))
+    folders = Folder.objects.filter(folderId=folderId)
+    if not folders.exists():
+        return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
+    folder = folders.first()
+    editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M')
+    if Folder.folderName == folderName:
+        return JsonResponse({'errno': 700003, 'msg': '文件夹名称未改变'})
+    if Folder.objects.filter(folderTeam=team, folderName=folderName, fatherFolder=folder.fatherFolder).exists():
+        return JsonResponse({'errno': 700001, 'msg': '文件夹名称重复'})
+    folder.folderName = folderName
+    folder.lastEditTime = editTime
+    folder.save()
+    return JsonResponse({'errno': 0, 'msg': '文件夹重命名成功'})
+
+
+@csrf_exempt
+def deleteFolder(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    folderId = request.POST.get('folder_id')
+    folders = Folder.objects.filter(folderId=folderId)
+    if not folders.exists():
+        return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
+    folder = folders.first()
+    folder.delete()
+    return JsonResponse({'errno': 0, 'msg': '文件夹删除成功'})
+
+
+@csrf_exempt
+def moveFolder(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    folderId = request.POST.get('folder_id')
+    toFolderId = request.POST.get('to_folder_id')
+    team = Team.objects.get(teamid=request.POST.get('team_id'))
+    folders = Folder.objects.filter(folderId=folderId)
+    if not folders.exists():
+        return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
+    folder = folders.first()
+    editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M')
+    if toFolderId == 0:
+        toFolder = None
+    else:
+        folders = Folder.objects.filter(folderId=toFolderId)
+        if not folders.exists():
+            return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
+        toFolder = folders.first()
+    if Folder.objects.filter(folderTeam=team, folderName=folder.folderName, fatherFolder=toFolder).exists():
+        return JsonResponse({'errno': 700001, 'msg': '文件夹名称重复'})
+    folder.fatherFolder = toFolder
+    folder.lastEditTime = editTime
+    if toFolderId == 0:
+        folder.isRoot = 1
+    folder.save()
+    return JsonResponse({'errno': 0, 'msg': '文件夹移动成功'})
+
+
+@csrf_exempt
+def file_center(request):
+    if request.method == 'POST':
+        request.META.get('HTTP_USREID')
+        teamid = request.POST.get('teamid')
+        team = Team.objects.get(teamid=teamid)
+        team_files = File.object.filter(fileTeam=team, judge=1)
+        team_data = []
+        for team_file in team_files:
+            team_data.append({
+                'fileId': team_file.fileId,
+                'fileName': team_file.fileName
+            })
+        projects = Project.objects.filter(projTeam=team)
+        projects_data = []
+        for project in projects:
+            files_data = []
+            files = File.objects.filter(projectId=project, judge=0)
+            for file in files:
+                files_data.append({
+                    'fileId': file.fileId,
+                    'fileName': file.fileName
+                })
+            projects_data.append({
+                'projectId': project.projId,
+                'projName': project.projName,
+                'files_data': files_data
+            })
+        return JsonResponse({'errno': 0, 'data': projects_data})
+    else:
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})

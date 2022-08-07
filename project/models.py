@@ -26,6 +26,18 @@ class Project(models.Model):
     copy_num = models.IntegerField(default=0)
 
 
+# 文件夹类
+class Folder(models.Model):
+    folderId = models.AutoField(primary_key=True)
+    folderTeam = models.ForeignKey(to=Team, on_delete=models.CASCADE)
+    folderName = models.CharField(max_length=50)
+    isRoot = models.IntegerField(default=2)         # 是否根目录 1-是 2-否
+    fatherFolder = models.ForeignKey(to='self', null=True, blank=True, on_delete=models.CASCADE)
+    folderCreator = models.ForeignKey(to=User, on_delete=models.CASCADE)
+    createTime = models.DateTimeField()
+    lastEditTime = models.DateTimeField()
+
+
 # 文档类
 class File(models.Model):
     fileId = models.AutoField(primary_key=True)
@@ -42,6 +54,7 @@ class File(models.Model):
     edit_file = models.ManyToManyField(User, through='UserFile')
     judge = models.IntegerField(default=0)          # 0是项目文档，1是团队文档
     fileTeam = models.ForeignKey(to=Team, null=True, on_delete=models.CASCADE, related_name='fileTeam')
+    fileFolder = models.ForeignKey(to=Folder, null=True, blank=True, on_delete=models.CASCADE, default=None)
     new = models.IntegerField(default=1)
     file_model = models.IntegerField(default=0)
 

@@ -26,7 +26,6 @@ urlpatterns = {
     path('getFileContent', getFileContent),
     path('edit_file', edit_file),
     path('upload_file_image', upload_file_image),
-    path('file_center', file_center),
     path('search_team_project', search_team_project),
     path('search_user_project', search_user_project),
     path('project_order', project_order)
