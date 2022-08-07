@@ -433,36 +433,53 @@ def upload_file_image(request):
     return JsonResponse({'errno': 0, 'msg': '上传图片成功', 'url': file_image.image.url})
 
 
+# @csrf_exempt
+# def edit_file(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+#     userid = request.POST.get('userid')
+#     fileid = request.POST.get('fileid')
+#     user = User.objects.filter(userid=userid).first()
+#     file = File.objects.filter(fileId=fileid).first()
+#     user_files = UserFile.objects.filter(user=user, file=file)
+#     if not user_files.exists():
+#         return JsonResponse({'errno': 400010, 'msg': '文件或用户不存在'})
+#     status = request.POST.get('status')
+#     user_file = user_files.first()
+#     user_file.status = status
+#     user_file.save()
+#     user_files = UserFile.objects.filter(file=file)
+#     editors = []
+#     for i in user_files:
+#         editors.append(i.user)
+#     num = 0
+#     for editor in editors:
+#         if UserFile.objects.filter(user=editor, file=file).first().status == 1:
+#             num = num + 1
+#     if int(status) == 1:
+#         if num == 1:
+#             return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 2})
+#         else:
+#             return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 0})
+#     # operation 0 不需要传回文件内容，1 需要传回文件内容，2 第一个用户需要获取文件内容
+#     if num == 0:
+#         return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 1})
+#     else:
+#         return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 0})
+
+
 @csrf_exempt
 def edit_file(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    userid = request.POST.get('userid')
     fileid = request.POST.get('fileid')
-    user = User.objects.filter(userid=userid).first()
-    file = File.objects.filter(fileId=fileid).first()
-    user_files = UserFile.objects.filter(user=user, file=file)
-    if not user_files.exists():
-        return JsonResponse({'errno': 400010, 'msg': '文件或用户不存在'})
-    status = request.POST.get('status')
-    user_file = user_files.first()
-    user_file.status = status
-    user_file.save()
-    user_files = UserFile.objects.filter(file=file)
-    editors = []
-    for i in user_files:
-        editors.append(i.user)
-    num = 0
-    for editor in editors:
-        if UserFile.objects.filter(user=editor, file=file).first().status == 1:
-            num = num + 1
-    if int(status) == 1:
-        if num == 1:
-            return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 2})
-        else:
-            return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 0})
-    # operation 0 不需要传回文件内容，1 需要传回文件内容，2 第一个用户需要获取文件内容
-    if num == 0:
-        return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 1})
+    files = File.objects.filter(fileId=fileid)
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
+    if file.new == 1:
+        file.new = 0
+        file.save()
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1})
     else:
-        return JsonResponse({'errno': 0, 'msg': '修改编辑状态成功', 'operation': 0})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 0})

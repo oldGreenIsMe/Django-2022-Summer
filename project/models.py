@@ -37,6 +37,7 @@ class File(models.Model):
                                      related_name='lastEditUser')
     lastEditTimeRecord = models.DateTimeField(auto_now=True)
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
+    new = models.IntegerField(default=1)
     edit_file = models.ManyToManyField(User, through='UserFile')
 
 
