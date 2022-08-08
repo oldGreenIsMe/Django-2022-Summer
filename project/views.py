@@ -372,9 +372,9 @@ def createFile(request):
         files = File.objects.filter(projectId=project.projId, fileName=fileName)
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
-        file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime, lastEditTime=createTime,
-                    lastEditUser=user, lastEditTimeRecord=time, projectId=project, judge=0, fileTeam=team,
-                    file_model=model_id)
+        file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime,
+                    lastEditTime=createTime, lastEditUser=user, lastEditTimeRecord=time, projectId=project, judge=0,
+                    fileTeam=team, file_model=model_id)
         file.save()
     else:           # 建立团队文档
         if folderId == 0:
@@ -701,4 +701,4 @@ def view_preview_status(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     project = Project.objects.get(projId=request.POST.get('proj_id'))
-    return JsonResponse({'errno': 0,'preview_status': project.preview_status})
+    return JsonResponse({'errno': 0, 'preview_status': project.preview_status})
