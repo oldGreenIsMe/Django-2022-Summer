@@ -620,7 +620,7 @@ def get_pdf(request):
     file_dir = settings.MEDIA_ROOT + '/filePDF/'
     pdfkit.from_string(html_str, file_dir + file_name)
     file_response = FileResponse(open("media/filePDF/{name}".format(name=file_name), 'rb'), as_attachment=True,
-                                 filename=file.fileName)
+                                 filename=file.fileName + '.pdf')
     return file_response
 
 
