@@ -615,7 +615,8 @@ def get_pdf(request):
     file_time = time.strftime('%Y_%m_%d_%H_%M_%S')
     file_name = file_time + '_' + str(user.userid) + '_' + str(file_id) + '.pdf'
     pdfkit.from_string(html_str, file_dir + file_name)
-    file_response = FileResponse(open("media/filePDF/{name}".format(name=file_name), 'rb'), as_attachment=True, filename=file.fileName + '.pdf')
+    file_response = FileResponse(open("media/filePDF/{name}".format(name=file_name), 'rb'), as_attachment=True,
+                                 filename=file.fileName + '.pdf')
     return JsonResponse({'errno': 0, 'msg': '导出pdf成功', 'file_response': file_response, 'db_file_name': file_name})
 
 
