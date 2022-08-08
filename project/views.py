@@ -21,7 +21,7 @@ def createProj(request):
     if projInfo is None or projInfo == "":
         projInfo = "暂无简介"
     startTime = request.POST.get('start_time')
-    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S')
+    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M')
     endTime = request.POST.get('end_time')
     projects = Project.objects.filter(projName=projName, projTeam=projTeam)
     if projects.exists():
@@ -63,7 +63,7 @@ def modifyProjInfo(request):
     if projInfo is None or projInfo == "":
         projInfo = "暂无简介"
     startTime = request.POST.get('start_time')
-    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M:%S')
+    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M')
     endTime = request.POST.get('end_time')
     projects = Project.objects.filter(projName=projName, projTeam=project.projTeam)
     if projects.exists() and projects.first() != project:
