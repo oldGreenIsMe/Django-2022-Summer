@@ -430,7 +430,7 @@ def createFolder(request):
         fatherFolder = Folder.objects.get(folderId=request.POST.get('father_id'))
     if Folder.objects.filter(folderTeam=team, folderName=folderName, fatherFolder=fatherFolder).exists():
         return JsonResponse({'errno': 700001, 'msg': '文件夹名称重复'})
-    createTime = datetime.datetime.strptime(request.POST.get('create_time'), '%Y-%m-%d %H:%M')
+    createTime = datetime.datetime.strptime(request.POST.get('create_time'), '%Y-%m-%d %H:%M:%S')
     Folder.objects.create(folderTeam=team, folderName=folderName, isRoot=isRoot, fatherFolder=fatherFolder,
                           folderCreator=user, createTime=createTime, lastEditTime=createTime)
     return JsonResponse({'errno': 0, 'msg': '文件夹创建成功'})
@@ -446,7 +446,7 @@ def renameFolder(request):
     if not folders.exists():
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
     folder = folders.first()
-    editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M')
+    editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M:%S')
     if Folder.folderName == folderName:
         return JsonResponse({'errno': 700003, 'msg': '文件夹名称未改变'})
     if Folder.objects.filter(folderTeam=folder.folderTeam, folderName=folderName,
@@ -481,7 +481,7 @@ def moveFolder(request):
     if not folders.exists():
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
     folder = folders.first()
-    editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M')
+    editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M:%S')
     if toFolderId == 0:
         toFolder = None
     else:
@@ -522,7 +522,7 @@ def moveFile(request):
                            fileFolder=file.fileFolder).exists():
         return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
     editTimeStr = request.POST.get('edit_time')
-    editTime = datetime.datetime.strptime(editTimeStr, '%Y-%m-%d %H:%M')
+    editTime = datetime.datetime.strptime(editTimeStr, '%Y-%m-%d %H:%M:%S')
     file.fileFolder = toFolder
     file.lastEditTime = editTimeStr
     file.lastEditUser = user
@@ -573,7 +573,7 @@ def getFolderContent(folderId):
         content.append({
             'type': 1,
             'folder_id': int(folder.folderId),
-            'last_edit_time': folder.lastEditTime.strptime('%Y-%m-%d %H:%M'),
+            'last_edit_time': folder.lastEditTime.strptime('%Y-%m-%d %H:%M:%S'),
             'content': getFolderContent(int(folder.folderId))
         })
     for file in fileList:
