@@ -23,6 +23,7 @@ class Project(models.Model):
     deleteTimeRecord = models.DateTimeField(null=True, blank=True)
     photo = models.ImageField(upload_to='projImg', default='projImg/default.png', storage=storage.ImageStorage())
     copy_num = models.IntegerField(default=0)
+    preview_status = models.IntegerField(default=0)  # 用于判断当前项目的预览状态, 0-无, 1-关闭, 2-打开
 
 
 # 文件夹类

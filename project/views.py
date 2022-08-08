@@ -631,3 +631,69 @@ def delete_pdf(request):
     file_name = request.POST.get('file_name')
     os.remove('media/filePDF/' + file_name)
     return JsonResponse({'errno': 0, 'msg': '删除服务器文件成功'})
+
+
+@csrf_exempt
+def open_proto_preview(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    project = Project.objects.get(projId=request.POST.get('proj_id'))
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    team = project.projTeam
+    user_teams = UserTeam.objects.filter(user=user, team=team)
+    if not user_teams.exists():
+        return JsonResponse({'errno': 300014, 'msg': '当前用户非团队成员，无权限'})
+    if project.preview_status != 2:
+        project.preview_status = 2
+    project.save()
+    return JsonResponse({'errno': 0, 'msg': '打开项目原型预览成功'})
+
+
+@csrf_exempt
+def close_proto_preview(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    project = Project.objects.get(projId=request.POST.get('proj_id'))
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    team = project.projTeam
+    user_teams = UserTeam.objects.filter(user=user, team=team)
+    if not user_teams.exists():
+        return JsonResponse({'errno': 300014, 'msg': '当前用户非团队成员，无权限'})
+    if project.preview_status == 2:
+        project.preview_status = 1
+    elif project.preview_status == 1:
+        return JsonResponse({'errno': 300015, 'msg': '项目原型预览已关闭'})
+    else:
+        return JsonResponse({'errno': 300016, 'msg': '项目原型预览尚未创建'})
+    project.save()
+    return JsonResponse({'errno': 0, 'msg': '关闭项目原型预览成功'})
+
+
+@csrf_exempt
+def view_proto_preview(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    project = Project.objects.get(projId=request.POST.get('proj_id'))
+    if project.preview_status == 0:
+        return JsonResponse({'errno': 300017, 'msg': '项目原型预览不存在'})
+    elif project.preview_status == 1:
+        return JsonResponse({'errno': 300018, 'msg': '项目原型预览已关闭'})
+    proto_data = []
+    protos = Prototype.objects.filter(projectId=project)
+    for proto in protos:
+        proto_data.append({
+            'proto_id': proto.prototypeId,
+            'proto_name': proto.protoName,
+            'canvas_width': proto.canvas_width,
+            'canvas_height': proto.canvas_height,
+            'protos_content': proto.protoContent
+        })
+    return JsonResponse({'errno': 0, 'all_proto_content': proto_data})
+
+
+@csrf_exempt
+def view_preview_status(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    project = Project.objects.get(projId=request.POST.get('proj_id'))
+    return JsonResponse({'errno': 0,'preview_status': project.preview_status})
