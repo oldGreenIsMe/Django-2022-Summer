@@ -31,4 +31,8 @@ urlpatterns = {
     path('project_order', project_order),
     path('get_pdf', get_pdf),
     path('delete_pdf', delete_pdf),
+    path('open_proto_preview', open_proto_preview),
+    path('close_proto_preview', close_proto_preview),
+    path('view_proto_preview', view_proto_preview),
+    path('view_preview_status', view_preview_status)
 }
