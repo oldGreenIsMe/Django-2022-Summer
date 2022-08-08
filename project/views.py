@@ -619,7 +619,7 @@ def get_pdf(request):
     pdfkit.from_string(html_str, file_dir + file_name)
     file_response = FileResponse(open("media/filePDF/{name}".format(name=file_name), 'rb'), as_attachment=True,
                                  filename=file.fileName + '.pdf')
-    return JsonResponse({'errno': 0, 'msg': '导出pdf成功', 'file_response': file_response, 'db_file_name': file_name})
+    return file_response
 
 
 @csrf_exempt
