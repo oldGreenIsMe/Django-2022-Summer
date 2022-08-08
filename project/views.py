@@ -361,6 +361,8 @@ def createFile(request):
     time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M')
     judge = request.POST.get('judge')
     folderId = request.POST.get('folder_id')
+    model_id = request.POST.get('model_id')
+    model_content = FileModel.objects.filter(model_id=model_id).first().model_content
     if judge == 0:  # 建立项目文档
         projects = Project.objects.filter(projId=request.POST.get('proj_id'))
         if not projects.exists():
@@ -369,7 +371,7 @@ def createFile(request):
         files = File.objects.filter(projectId=project.projId, fileName=fileName)
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
-        file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
+        file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime, lastEditTime=createTime,
                     lastEditUser=user, lastEditTimeRecord=time, projectId=project, judge=0, fileTeam=team)
         file.save()
     else:  # 建立团队文档
@@ -383,7 +385,7 @@ def createFile(request):
         files = File.objects.filter(fileTeam=team, judge=1, fileName=fileName, fileFolder=folder)
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
-        file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
+        file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime, lastEditTime=createTime,
                     lastEditUser=user, lastEditTimeRecord=time, judge=1, fileTeam=team, fileFolder=folder)
         file.save()
     return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
