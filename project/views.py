@@ -513,7 +513,9 @@ def edit_file(request):
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
     model_id = file.file_model
-    model = FileModel.objects.filter(model_id=model_id)
+    model = ''
+    if model_id != 0:
+        model = FileModel.objects.filter(model_id=model_id).first().model_content
     if file.new == 1:
         file.new = 0
         file.save()
@@ -618,6 +620,7 @@ def get_pdf(request):
                '</body>\n' + \
                '</html>'
     file_dir = settings.MEDIA_ROOT + '/filePDF/'
+    # config = pdfkit.configuration(wkhtmltopdf='D:\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
     pdfkit.from_string(html_str, file_dir + file_name)
     file_response = FileResponse(open("media/filePDF/{name}".format(name=file_name), 'rb'), as_attachment=True,
                                  filename=file.fileName + '.pdf')
