@@ -512,12 +512,14 @@ def edit_file(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    model_id = file.file_model
+    model = FileModel.objects.filter(model_id=model_id)
     if file.new == 1:
         file.new = 0
         file.save()
-        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1, 'model_id': file.file_model})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1, 'model': model})
     else:
-        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 0, 'model_id': file.file_model})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 0, 'model': model})
 
 
 @csrf_exempt
