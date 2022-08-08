@@ -3,7 +3,6 @@ from django.db.models import Q
 from django.utils import timezone
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from team.models import *
 from utils.email import *
@@ -443,7 +442,6 @@ def renameFolder(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     folderId = request.POST.get('folder_id')
     folderName = request.POST.get('folder_name')
-    team = Team.objects.get(teamid=request.POST.get('team_id'))
     folders = Folder.objects.filter(folderId=folderId)
     if not folders.exists():
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
@@ -451,7 +449,8 @@ def renameFolder(request):
     editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M')
     if Folder.folderName == folderName:
         return JsonResponse({'errno': 700003, 'msg': '文件夹名称未改变'})
-    if Folder.objects.filter(folderTeam=team, folderName=folderName, fatherFolder=folder.fatherFolder).exists():
+    if Folder.objects.filter(folderTeam=folder.folderTeam, folderName=folderName,
+                             fatherFolder=folder.fatherFolder).exists():
         return JsonResponse({'errno': 700001, 'msg': '文件夹名称重复'})
     folder.folderName = folderName
     folder.lastEditTime = editTime
@@ -478,7 +477,6 @@ def moveFolder(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     folderId = request.POST.get('folder_id')
     toFolderId = request.POST.get('to_folder_id')
-    team = Team.objects.get(teamid=request.POST.get('team_id'))
     folders = Folder.objects.filter(folderId=folderId)
     if not folders.exists():
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
@@ -491,7 +489,8 @@ def moveFolder(request):
         if not folders.exists():
             return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
         toFolder = folders.first()
-    if Folder.objects.filter(folderTeam=team, folderName=folder.folderName, fatherFolder=toFolder).exists():
+    if Folder.objects.filter(folderTeam=folder.folderTeam, folderName=folder.folderName,
+                             fatherFolder=toFolder).exists():
         return JsonResponse({'errno': 700001, 'msg': '文件夹名称重复'})
     folder.fatherFolder = toFolder
     folder.lastEditTime = editTime
@@ -502,12 +501,43 @@ def moveFolder(request):
 
 
 @csrf_exempt
+def moveFile(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    fileId = request.POST.get('file_id')
+    toFolderId = request.POST.get('to_folder_id')
+    files = File.objects.filter(fileId=fileId)
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
+    if toFolderId == 0:
+        toFolder = None
+    else:
+        folders = Folder.objects.filter(folderId=toFolderId)
+        if not folders.exists():
+            return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
+        toFolder = folders.first()
+    if File.objects.filter(fileName=file.fileName, judge=1, fileTeam=file.fileTeam,
+                           fileFolder=file.fileFolder).exists():
+        return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
+    editTimeStr = request.POST.get('edit_time')
+    editTime = datetime.datetime.strptime(editTimeStr, '%Y-%m-%d %H:%M')
+    file.fileFolder = toFolder
+    file.lastEditTime = editTimeStr
+    file.lastEditUser = user
+    file.lastEditTimeRecord = editTime
+    file.save()
+    return JsonResponse({'errno': 0, 'msg': '文档移动成功'})
+
+
+@csrf_exempt
 def file_center(request):
     if request.method == 'POST':
         request.META.get('HTTP_USREID')
         teamid = request.POST.get('teamid')
         team = Team.objects.get(teamid=teamid)
-        team_files = File.object.filter(fileTeam=team, judge=1)
+        team_files = File.objects.filter(fileTeam=team, judge=1)
         team_data = []
         for team_file in team_files:
             team_data.append({

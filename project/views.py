@@ -1,7 +1,5 @@
 import datetime
 from django.utils import timezone
-from django.core import serializers
-from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from project.models import *
@@ -354,6 +352,7 @@ def createFile(request):
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     team = Team.objects.get(teamid=request.POST.get('teamid'))
     createTime = request.POST.get('create_time')
+    time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M')
     judge = request.POST.get('judge')
     folderId = request.POST.get('folder_id')
     if judge == 0:  # 建立项目文档
@@ -365,7 +364,7 @@ def createFile(request):
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
         file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
-                    lastEditUser=user, projectId=project, judge=0, fileTeam=team)
+                    lastEditUser=user, lastEditTimeRecord=time, projectId=project, judge=0, fileTeam=team)
         file.save()
     else:  # 建立团队文档
         if folderId == 0:
@@ -379,7 +378,7 @@ def createFile(request):
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
         file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
-                    lastEditUser=user, judge=1, fileTeam=team, fileFolder=folder)
+                    lastEditUser=user, lastEditTimeRecord=time, judge=1, fileTeam=team, fileFolder=folder)
         file.save()
     return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
 
@@ -406,10 +405,12 @@ def modifyFile(request):
     file = files.first()
     content = request.POST.get('content')
     modifyTime = request.POST.get('modify_time')
+    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M')
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     file.content = content
     file.lastEditTime = modifyTime
     file.lastEditUser = user
+    file.lastEditTimeRecord = time
     file.save()
     return JsonResponse({'errno': 0, 'msg': '文档编辑成功'})
 
@@ -418,6 +419,7 @@ def modifyFile(request):
 def renameFile(request):
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     modifyTime = request.POST.get('modify_time')
+    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M')
     files = File.objects.filter(fileId=request.POST.get('file_id'))
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
@@ -440,6 +442,7 @@ def renameFile(request):
     file.fileName = fileName
     file.lastEditTime = modifyTime
     file.lastEditUser = user
+    file.lastEditTimeRecord = time
     file.save()
     return JsonResponse({'errno': 0, 'msg': '文档重命名成功'})
 
@@ -480,8 +483,6 @@ def getFileContent(request):
 
 @csrf_exempt
 def upload_file_image(request):
-    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
-    modifyTime = request.POST.get('modify_time')
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     files = File.objects.filter(fileId=request.POST.get('file_id'))
@@ -490,16 +491,11 @@ def upload_file_image(request):
     image = request.FILES.get('image')
     file_image = FileImage(file=files.first(), image=image)
     file_image.save()
-    file.lastEditTime = modifyTime
-    file.lastEditUser = user
-    file.save()
     return JsonResponse({'errno': 0, 'msg': '上传图片成功', 'url': file_image.image.url})
 
 
 @csrf_exempt
 def edit_file(request):
-    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
-    modifyTime = request.POST.get('modify_time')
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     fileid = request.POST.get('fileid')
@@ -509,8 +505,6 @@ def edit_file(request):
     file = files.first()
     if file.new == 1:
         file.new = 0
-        file.lastEditTime = modifyTime
-        file.lastEditUser = user
         file.save()
         return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1})
     else:

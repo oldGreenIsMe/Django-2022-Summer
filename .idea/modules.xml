@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/STCMP.iml" filepath="$PROJECT_DIR$/.idea/STCMP.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Django-2022-Summer.iml" filepath="$PROJECT_DIR$/.idea/Django-2022-Summer.iml" />
     </modules>
   </component>
 </project>
