@@ -30,4 +30,5 @@ urlpatterns = {
     path('search_user_project', search_user_project),
     path('project_order', project_order),
     path('get_pdf', get_pdf),
+    path('delete_pdf', delete_pdf),
 }
