@@ -223,7 +223,8 @@ def copy_project(request):
     protos = Prototype.objects.filter(projectId=proj)
     for proto in protos:
         proto = Prototype(projectId=proj_copy, protoName=proto.protoName, protoCreator=user,
-                          protoContent=proto.protoContent, protoPhoto=proto.protoPhoto, canvas_width=proto.canvas_width, canvas_height=proto.canvas_height)
+                          protoContent=proto.protoContent, protoPhoto=proto.protoPhoto, canvas_width=proto.canvas_width,
+                          canvas_height=proto.canvas_height)
         proto.save()
     return JsonResponse({'errno': 0, 'msg': '复制成功'})
 
@@ -359,6 +360,7 @@ def createFile(request):
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     team = Team.objects.get(teamid=request.POST.get('teamid'))
     createTime = request.POST.get('create_time')
+    time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M')
     judge = request.POST.get('judge')
     folderId = request.POST.get('folder_id')
     if judge == 0:  # 建立项目文档
@@ -370,7 +372,7 @@ def createFile(request):
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
         file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
-                    lastEditUser=user, projectId=project, judge=0, fileTeam=team)
+                    lastEditUser=user, lastEditTimeRecord=time, projectId=project, judge=0, fileTeam=team)
         file.save()
     else:  # 建立团队文档
         if folderId == 0:
@@ -384,7 +386,7 @@ def createFile(request):
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
         file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
-                    lastEditUser=user, judge=1, fileTeam=team, fileFolder=folder)
+                    lastEditUser=user, lastEditTimeRecord=time, judge=1, fileTeam=team, fileFolder=folder)
         file.save()
     return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
 
@@ -411,10 +413,12 @@ def modifyFile(request):
     file = files.first()
     content = request.POST.get('content')
     modifyTime = request.POST.get('modify_time')
+    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M')
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     file.content = content
     file.lastEditTime = modifyTime
     file.lastEditUser = user
+    file.lastEditTimeRecord = time
     file.save()
     return JsonResponse({'errno': 0, 'msg': '文档编辑成功'})
 
@@ -423,6 +427,7 @@ def modifyFile(request):
 def renameFile(request):
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     modifyTime = request.POST.get('modify_time')
+    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M')
     files = File.objects.filter(fileId=request.POST.get('file_id'))
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
@@ -445,6 +450,7 @@ def renameFile(request):
     file.fileName = fileName
     file.lastEditTime = modifyTime
     file.lastEditUser = user
+    file.lastEditTimeRecord = time
     file.save()
     return JsonResponse({'errno': 0, 'msg': '文档重命名成功'})
 
@@ -485,8 +491,6 @@ def getFileContent(request):
 
 @csrf_exempt
 def upload_file_image(request):
-    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
-    modifyTime = request.POST.get('modify_time')
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     files = File.objects.filter(fileId=request.POST.get('file_id'))
@@ -500,8 +504,6 @@ def upload_file_image(request):
 
 @csrf_exempt
 def edit_file(request):
-    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
-    modifyTime = request.POST.get('modify_time')
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     fileid = request.POST.get('fileid')
@@ -511,8 +513,6 @@ def edit_file(request):
     file = files.first()
     if file.new == 1:
         file.new = 0
-        file.lastEditTime = modifyTime
-        file.lastEditUser = user
         file.save()
         return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1})
     else:
@@ -532,7 +532,7 @@ def search_user_project(request):
                 data.append({
                     'projName': project.projName,
                     'projId': project.projId,
-                    'photo': project.photo
+                    'photo': project.photo.url
                 })
         return JsonResponse({'errno': 0, 'data': data})
     else:
@@ -550,7 +550,7 @@ def search_team_project(request):
             data.append({
                 'projName': project.projName,
                 'projId': project.projId,
-                'photo': project.photo
+                'photo': project.photo.url
             })
         return JsonResponse({'errno': 0, 'data': data})
     else:
@@ -561,27 +561,27 @@ def search_team_project(request):
 def project_order(request):
     if request.method == 'POST':
         according = request.POST.get('according')
-        team = Team.objects.filter(teamid=request.POST.get('teamid'))
+        team = Team.objects.get(teamid=request.POST.get('teamid'))
         projects = []
         if according == '创建时间从早到晚':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('projId')
+            projects = team.project_set.filter(status=1).order_by('projId')
         elif according == '创建时间从晚到早':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('-projId')
+            projects = team.project_set.filter(status=1).order_by('-projId')
         elif according == '名称字典序正序':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('projName')
+            projects = team.project_set.filter(status=1).order_by('projName')
         elif according == '名称字典序倒序':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('-projName')
+            projects = team.project_set.filter(status=1).order_by('-projName')
         elif according == '开始时间从早到晚':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('startTimeRecord')
+            projects = team.project_set.filter(status=1).order_by('startTimeRecord')
         elif according == '开始时间从晚到早':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('-startTimeRecord')
+            projects = team.project_set.filter(status=1).order_by('-startTimeRecord')
         data = []
         for project in projects:
             data.append({
                 'projId': project.projId,
                 'projName': project.projName,
                 'startTime': project.startTime,
-                'photo': project.photo
+                'photo': project.photo.url
             })
         return JsonResponse({'errno': 0, 'data': data})
     else:
@@ -613,7 +613,6 @@ def get_pdf(request):
                file.content + '</div>\n' + \
                '</body>\n' + \
                '</html>'
-    config = pdfkit.configuration(wkhtmltopdf='D:\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
     file_dir = settings.MEDIA_ROOT + '/filePDF/'
     file_time = time.strftime('%Y_%m_%d_%H_%M_%S')
     file_name = file_time + '_' + str(user.userid) + '_' + str(file_id) + '.pdf'
