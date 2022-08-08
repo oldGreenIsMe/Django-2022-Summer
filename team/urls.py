@@ -34,5 +34,6 @@ urlpatterns = {
     path('renameFolder', renameFolder),
     path('deleteFolder', deleteFolder),
     path('moveFolder', moveFolder),
+    path('moveFile', moveFile),
     path('file_center', file_center),
 }

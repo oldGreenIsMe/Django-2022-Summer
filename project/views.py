@@ -21,7 +21,7 @@ def createProj(request):
     if projInfo is None or projInfo == "":
         projInfo = "暂无简介"
     startTime = request.POST.get('start_time')
-    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M')
+    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M') + datetime.timedelta(hours=8)
     endTime = request.POST.get('end_time')
     projects = Project.objects.filter(projName=projName, projTeam=projTeam)
     if projects.exists():
@@ -63,7 +63,7 @@ def modifyProjInfo(request):
     if projInfo is None or projInfo == "":
         projInfo = "暂无简介"
     startTime = request.POST.get('start_time')
-    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M')
+    startTimeRecord = datetime.datetime.strptime(startTime, '%Y-%m-%d %H:%M') + datetime.timedelta(hours=8)
     endTime = request.POST.get('end_time')
     projects = Project.objects.filter(projName=projName, projTeam=project.projTeam)
     if projects.exists() and projects.first() != project:
@@ -358,9 +358,9 @@ def createFile(request):
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     team = Team.objects.get(teamid=request.POST.get('teamid'))
     createTime = request.POST.get('create_time')
-    time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M:%S')
-    judge = request.POST.get('judge')
-    folderId = request.POST.get('folder_id')
+    time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
+    judge = int(request.POST.get('judge'))
+    folderId = int(request.POST.get('folder_id'))
     if judge == 0:  # 建立项目文档
         projects = Project.objects.filter(projId=request.POST.get('proj_id'))
         if not projects.exists():
@@ -372,7 +372,7 @@ def createFile(request):
         file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
                     lastEditUser=user, lastEditTimeRecord=time, projectId=project, judge=0, fileTeam=team)
         file.save()
-    else:  # 建立团队文档
+    else:           # 建立团队文档
         if folderId == 0:
             folder = None
         else:
@@ -411,7 +411,7 @@ def modifyFile(request):
     file = files.first()
     content = request.POST.get('content')
     modifyTime = request.POST.get('modify_time')
-    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M:%S')
+    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     file.content = content
     file.lastEditTime = modifyTime
@@ -425,7 +425,7 @@ def modifyFile(request):
 def renameFile(request):
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     modifyTime = request.POST.get('modify_time')
-    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M:%S')
+    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
     files = File.objects.filter(fileId=request.POST.get('file_id'))
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
