@@ -1,5 +1,4 @@
 import os
-import time
 import pdfkit
 import datetime
 from django.conf import settings
@@ -386,8 +385,9 @@ def createFile(request):
         files = File.objects.filter(fileTeam=team, judge=1, fileName=fileName, fileFolder=folder)
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
-        file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime, lastEditTime=createTime,
-                    lastEditUser=user, lastEditTimeRecord=time, judge=1, fileTeam=team, fileFolder=folder, file_model=model_id)
+        file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime,
+                    lastEditTime=createTime, lastEditUser=user, lastEditTimeRecord=time, judge=1, fileTeam=team,
+                    fileFolder=folder, file_model=model_id)
         file.save()
     return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
 
