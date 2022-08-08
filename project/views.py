@@ -361,7 +361,7 @@ def createFile(request):
     time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M:%S')
     judge = request.POST.get('judge')
     folderId = request.POST.get('folder_id')
-    model_id = request.POST.get('model_id')
+    model_id = request.POST.get('model')
     model_content = FileModel.objects.filter(model_id=model_id).first().model_content
     if judge == 0:  # 建立项目文档
         projects = Project.objects.filter(projId=request.POST.get('proj_id'))
@@ -372,7 +372,7 @@ def createFile(request):
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
         file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime, lastEditTime=createTime,
-                    lastEditUser=user, lastEditTimeRecord=time, projectId=project, judge=0, fileTeam=team)
+                    lastEditUser=user, lastEditTimeRecord=time, projectId=project, judge=0, fileTeam=team, file_model=model_id)
         file.save()
     else:  # 建立团队文档
         if folderId == 0:
@@ -386,7 +386,7 @@ def createFile(request):
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
         file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime, lastEditTime=createTime,
-                    lastEditUser=user, lastEditTimeRecord=time, judge=1, fileTeam=team, fileFolder=folder)
+                    lastEditUser=user, lastEditTimeRecord=time, judge=1, fileTeam=team, fileFolder=folder, file_model=model_id)
         file.save()
     return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
 
@@ -514,9 +514,9 @@ def edit_file(request):
     if file.new == 1:
         file.new = 0
         file.save()
-        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1, 'model_id': file.file_model})
     else:
-        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 0})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 0, 'model_id': file.file_model})
 
 
 @csrf_exempt
