@@ -49,7 +49,7 @@ class File(models.Model):
     lastEditTime = models.CharField(max_length=20, null=True, blank=True)
     lastEditUser = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE,
                                      related_name='lastEditUser')
-    lastEditTimeRecord = models.DateTimeField(auto_now=True)
+    lastEditTimeRecord = models.DateTimeField()
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
     edit_file = models.ManyToManyField(User, through='UserFile')
     judge = models.IntegerField(default=0)          # 0是项目文档，1是团队文档
