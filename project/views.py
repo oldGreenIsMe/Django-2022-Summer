@@ -1,4 +1,4 @@
-import pdfkit
+import datetime
 from django.utils import timezone
 from django.core import serializers
 from django.shortcuts import render
@@ -6,7 +6,6 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from project.models import *
 from team.models import *
-import datetime
 
 
 @csrf_exempt
@@ -356,6 +355,7 @@ def createFile(request):
     team = Team.objects.get(teamid=request.POST.get('teamid'))
     createTime = request.POST.get('create_time')
     judge = request.POST.get('judge')
+    folderId = request.POST.get('folder_id')
     if judge == 0:  # 建立项目文档
         projects = Project.objects.filter(projId=request.POST.get('proj_id'))
         if not projects.exists():
@@ -368,11 +368,18 @@ def createFile(request):
                     lastEditUser=user, projectId=project, judge=0, fileTeam=team)
         file.save()
     else:  # 建立团队文档
-        files = File.objects.filter(fileTeam=team, judge=1, fileName=fileName)
+        if folderId == 0:
+            folder = None
+        else:
+            folders = Folder.objects.filter(folderId=folderId)
+            if not folders.exists():
+                return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
+            folder = folders.first()
+        files = File.objects.filter(fileTeam=team, judge=1, fileName=fileName, fileFolder=folder)
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
         file = File(fileName=fileName, fileCreator=user, content="", create=createTime, lastEditTime=createTime,
-                    lastEditUser=user, judge=1, fileTeam=team)
+                    lastEditUser=user, judge=1, fileTeam=team, fileFolder=folder)
         file.save()
     return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
 
@@ -409,6 +416,8 @@ def modifyFile(request):
 
 @csrf_exempt
 def renameFile(request):
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    modifyTime = request.POST.get('modify_time')
     files = File.objects.filter(fileId=request.POST.get('file_id'))
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
@@ -425,10 +434,12 @@ def renameFile(request):
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
     else:
         team = Team.objects.get(teamid=request.POST.get('teamid'))
-        files = File.objects.filter(fileTeam=team, fileName=fileName, judge=1)
+        files = File.objects.filter(fileTeam=team, fileName=fileName, judge=1, fileFolder=file.fileFolder)
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
     file.fileName = fileName
+    file.lastEditTime = modifyTime
+    file.lastEditUser = user
     file.save()
     return JsonResponse({'errno': 0, 'msg': '文档重命名成功'})
 
@@ -469,6 +480,8 @@ def getFileContent(request):
 
 @csrf_exempt
 def upload_file_image(request):
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    modifyTime = request.POST.get('modify_time')
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     files = File.objects.filter(fileId=request.POST.get('file_id'))
@@ -477,11 +490,16 @@ def upload_file_image(request):
     image = request.FILES.get('image')
     file_image = FileImage(file=files.first(), image=image)
     file_image.save()
+    file.lastEditTime = modifyTime
+    file.lastEditUser = user
+    file.save()
     return JsonResponse({'errno': 0, 'msg': '上传图片成功', 'url': file_image.image.url})
 
 
 @csrf_exempt
 def edit_file(request):
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    modifyTime = request.POST.get('modify_time')
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     fileid = request.POST.get('fileid')
@@ -491,43 +509,12 @@ def edit_file(request):
     file = files.first()
     if file.new == 1:
         file.new = 0
+        file.lastEditTime = modifyTime
+        file.lastEditUser = user
         file.save()
         return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1})
     else:
         return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 0})
-
-
-@csrf_exempt
-def file_center(request):
-    if request.method == 'POST':
-        request.META.get('HTTP_USREID')
-        teamid = request.POST.get('teamid')
-        team = Team.objects.get(teamid=teamid)
-        team_files = File.object.filter(fileTeam=team, judge=1)
-        team_data = []
-        for team_file in team_files:
-            team_data.append({
-                'fileId': team_file.fileId,
-                'fileName': team_file.fileName
-            })
-        projects = Project.objects.filter(projTeam=team)
-        projects_data = []
-        for project in projects:
-            files_data = []
-            files = File.objects.filter(projectId=project, judge=0)
-            for file in files:
-                files_data.append({
-                    'fileId': file.fileId,
-                    'fileName': file.fileName
-                })
-            projects_data.append({
-                'projectId': project.projId,
-                'projName': project.projName,
-                'files_data': files_data
-            })
-        return JsonResponse({'errno': 0, 'data': projects_data})
-    else:
-        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
 
 
 @csrf_exempt
@@ -553,7 +540,6 @@ def search_user_project(request):
 @csrf_exempt
 def search_team_project(request):
     if request.method == 'POST':
-        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
         projName = request.POST.get('projName')
         team = Team.objects.get(teamid=request.POST.get('teamid'))
         projects = Project.objects.filter(projTeam=team, status=1, projName__icontains=projName)
@@ -572,9 +558,9 @@ def search_team_project(request):
 @csrf_exempt
 def project_order(request):
     if request.method == 'POST':
-        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
         according = request.POST.get('according')
         team = Team.objects.filter(teamid=request.POST.get('teamid'))
+        projects = []
         if according == '创建时间从早到晚':
             projects = Project.objects.filter(projTeam=team, status=1).order_by('projId')
         elif according == '创建时间从晚到早':
@@ -598,10 +584,3 @@ def project_order(request):
         return JsonResponse({'errno': 0, 'data': data})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-
-
-@csrf_exempt
-def get_pdf(request):
-    config = pdfkit.configuration(wkhtmltopdf='D:\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
-    pdfkit.from_url('https://www.baidu.com', '1.pdf', configuration=config)
-    return JsonResponse({'errno': 0})

@@ -30,4 +30,9 @@ urlpatterns = {
     path('search_user', search_user),
     path('sendVerifyCode', sendVerifyCode),
     path('acceptInvitation', acceptInvitation),
+    path('createFolder', createFolder),
+    path('renameFolder', renameFolder),
+    path('deleteFolder', deleteFolder),
+    path('moveFolder', moveFolder),
+    path('file_center', file_center),
 }
