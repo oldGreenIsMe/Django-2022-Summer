@@ -524,7 +524,7 @@ def search_user_project(request):
                 data.append({
                     'projName': project.projName,
                     'projId': project.projId,
-                    'photo': project.photo
+                    'photo': project.photo.url
                 })
         return JsonResponse({'errno': 0, 'data': data})
     else:
@@ -542,7 +542,7 @@ def search_team_project(request):
             data.append({
                 'projName': project.projName,
                 'projId': project.projId,
-                'photo': project.photo
+                'photo': project.photo.url
             })
         return JsonResponse({'errno': 0, 'data': data})
     else:
@@ -553,27 +553,27 @@ def search_team_project(request):
 def project_order(request):
     if request.method == 'POST':
         according = request.POST.get('according')
-        team = Team.objects.filter(teamid=request.POST.get('teamid'))
+        team = Team.objects.get(teamid=request.POST.get('teamid'))
         projects = []
         if according == '创建时间从早到晚':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('projId')
+            projects = team.project_set.filter(status=1).order_by('projId')
         elif according == '创建时间从晚到早':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('-projId')
+            projects = team.project_set.filter(status=1).order_by('-projId')
         elif according == '名称字典序正序':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('projName')
+            projects = team.project_set.filter(status=1).order_by('projName')
         elif according == '名称字典序倒序':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('-projName')
+            projects = team.project_set.filter(status=1).order_by('-projName')
         elif according == '开始时间从早到晚':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('startTimeRecord')
+            projects = team.project_set.filter(status=1).order_by('startTimeRecord')
         elif according == '开始时间从晚到早':
-            projects = Project.objects.filter(projTeam=team, status=1).order_by('-startTimeRecord')
+            projects = team.project_set.filter(status=1).order_by('-startTimeRecord')
         data = []
         for project in projects:
             data.append({
                 'projId': project.projId,
                 'projName': project.projName,
                 'startTime': project.startTime,
-                'photo': project.photo
+                'photo': project.photo.url
             })
         return JsonResponse({'errno': 0, 'data': data})
     else:
