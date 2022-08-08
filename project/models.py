@@ -1,8 +1,8 @@
-from django.db import models
-from team.models import User, Team
 from utils import storage
+from django.db import models
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
+from team.models import User, Team
 
 
 # 项目类
@@ -15,9 +15,8 @@ class Project(models.Model):
     startTime = models.CharField(max_length=20, null=True, blank=True)
     startTimeRecord = models.DateTimeField(null=True, blank=True)
     endTime = models.CharField(max_length=20, null=True, blank=True)
-    # 用于判断是否被删除到回收站中 1-未被删除 2-回收站中
-    status = models.IntegerField(default=1)
-    # 记录删除的用户（ID）及删除时间
+    status = models.IntegerField(default=1)     # 用于判断是否被删除到回收站中 1-未被删除 2-回收站中
+    # 记录删除该项目的用户及删除时间
     deletePerson = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='deletePerson')
     deleteTime = models.CharField(max_length=20, null=True, blank=True)
@@ -49,7 +48,7 @@ class File(models.Model):
     lastEditTime = models.CharField(max_length=20, null=True, blank=True)
     lastEditUser = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE,
                                      related_name='lastEditUser')
-    lastEditTimeRecord = models.DateTimeField(auto_now=True)
+    lastEditTimeRecord = models.DateTimeField()
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
     edit_file = models.ManyToManyField(User, through='UserFile')
     judge = models.IntegerField(default=0)          # 0是项目文档，1是团队文档

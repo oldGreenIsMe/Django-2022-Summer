@@ -358,7 +358,7 @@ def createFile(request):
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     team = Team.objects.get(teamid=request.POST.get('teamid'))
     createTime = request.POST.get('create_time')
-    time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M')
+    time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M:%S')
     judge = request.POST.get('judge')
     folderId = request.POST.get('folder_id')
     model_id = request.POST.get('model_id')
@@ -413,7 +413,7 @@ def modifyFile(request):
     file = files.first()
     content = request.POST.get('content')
     modifyTime = request.POST.get('modify_time')
-    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M')
+    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M:%S')
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     file.content = content
     file.lastEditTime = modifyTime
@@ -427,7 +427,7 @@ def modifyFile(request):
 def renameFile(request):
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     modifyTime = request.POST.get('modify_time')
-    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M')
+    time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M:%S')
     files = File.objects.filter(fileId=request.POST.get('file_id'))
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
@@ -617,7 +617,8 @@ def get_pdf(request):
     file_time = time.strftime('%Y_%m_%d_%H_%M_%S')
     file_name = file_time + '_' + str(user.userid) + '_' + str(file_id) + '.pdf'
     pdfkit.from_string(html_str, file_dir + file_name)
-    file_response = FileResponse(open("media/filePDF/{name}".format(name=file_name), 'rb'), as_attachment=True, filename=file.fileName + '.pdf')
+    file_response = FileResponse(open("media/filePDF/{name}".format(name=file_name), 'rb'), as_attachment=True,
+                                 filename=file.fileName + '.pdf')
     return JsonResponse({'errno': 0, 'msg': '导出pdf成功', 'file_response': file_response, 'db_file_name': file_name})
 
 
