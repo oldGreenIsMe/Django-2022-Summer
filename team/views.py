@@ -562,3 +562,23 @@ def file_center(request):
         return JsonResponse({'errno': 0, 'data': projects_data})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+def getFolderContent(folderId):
+    thisFolder = Folder.objects.get(folderId=folderId)
+    content = []
+    folderList = Folder.objects.filter(fatherFolder=thisFolder).order_by('-lastEditTime')
+    fileList = File.objects.filter(fileFolder=thisFolder).order_by('-lastEditTimeRecord')
+    for folder in folderList:
+        content.append({
+            'type': 1,
+            'folder_id': int(folder.folderId),
+            'last_edit_time': folder.lastEditTime.strptime('%Y-%m-%d %H:%M'),
+            'content': getFolderContent(int(folder.folderId))
+        })
+    for file in fileList:
+        content.append({
+            'type': 2,
+            'file_id': int(file.fileId),
+            'last_edit_time': file.lastEditTime,
+        })
