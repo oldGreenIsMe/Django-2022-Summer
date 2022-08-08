@@ -1,8 +1,8 @@
-from django.db import models
-from team.models import User, Team
 from utils import storage
+from django.db import models
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
+from team.models import User, Team
 
 
 # 项目类
