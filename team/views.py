@@ -295,7 +295,7 @@ def delete_team(request):
 @csrf_exempt
 def handleInvitation(request):
     if request.method == 'POST':
-        inviteId = request.POST.get('inviteId')
+        inviteId = int(request.POST.get('inviteId'))
         inviteMessage = InviteMessage.objects.get(inviteId=inviteId)
         user = inviteMessage.user
         team = inviteMessage.team
@@ -423,7 +423,7 @@ def createFolder(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     team = Team.objects.get(teamid=request.POST.get('team_id'))
-    isRoot = request.POST.get('is_root')
+    isRoot = int(request.POST.get('is_root'))
     fatherFolder = None
     folderName = request.POST.get('folder_name')
     if isRoot != 1:
@@ -431,6 +431,7 @@ def createFolder(request):
     if Folder.objects.filter(folderTeam=team, folderName=folderName, fatherFolder=fatherFolder).exists():
         return JsonResponse({'errno': 700001, 'msg': '文件夹名称重复'})
     createTime = datetime.datetime.strptime(request.POST.get('create_time'), '%Y-%m-%d %H:%M:%S')
+    createTime = createTime + datetime.timedelta(hours=8)
     Folder.objects.create(folderTeam=team, folderName=folderName, isRoot=isRoot, fatherFolder=fatherFolder,
                           folderCreator=user, createTime=createTime, lastEditTime=createTime)
     return JsonResponse({'errno': 0, 'msg': '文件夹创建成功'})
@@ -447,7 +448,8 @@ def renameFolder(request):
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
     folder = folders.first()
     editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M:%S')
-    if Folder.folderName == folderName:
+    editTime = editTime + datetime.timedelta(hours=8)
+    if folder.folderName == folderName:
         return JsonResponse({'errno': 700003, 'msg': '文件夹名称未改变'})
     if Folder.objects.filter(folderTeam=folder.folderTeam, folderName=folderName,
                              fatherFolder=folder.fatherFolder).exists():
@@ -476,7 +478,7 @@ def moveFolder(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     folderId = request.POST.get('folder_id')
-    toFolderId = request.POST.get('to_folder_id')
+    toFolderId = int(request.POST.get('to_folder_id'))
     folders = Folder.objects.filter(folderId=folderId)
     if not folders.exists():
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
@@ -493,7 +495,7 @@ def moveFolder(request):
                              fatherFolder=toFolder).exists():
         return JsonResponse({'errno': 700001, 'msg': '文件夹名称重复'})
     folder.fatherFolder = toFolder
-    folder.lastEditTime = editTime
+    folder.lastEditTime = editTime + datetime.timedelta(hours=8)
     if toFolderId == 0:
         folder.isRoot = 1
     folder.save()
@@ -526,7 +528,7 @@ def moveFile(request):
     file.fileFolder = toFolder
     file.lastEditTime = editTimeStr
     file.lastEditUser = user
-    file.lastEditTimeRecord = editTime
+    file.lastEditTimeRecord = editTime + datetime.timedelta(hours=8)
     file.save()
     return JsonResponse({'errno': 0, 'msg': '文档移动成功'})
 
@@ -534,16 +536,27 @@ def moveFile(request):
 @csrf_exempt
 def file_center(request):
     if request.method == 'POST':
-        request.META.get('HTTP_USREID')
-        teamid = request.POST.get('teamid')
-        team = Team.objects.get(teamid=teamid)
-        team_files = File.objects.filter(fileTeam=team, judge=1)
-        team_data = []
-        for team_file in team_files:
-            team_data.append({
-                'fileId': team_file.fileId,
-                'fileName': team_file.fileName
+        teamId = request.POST.get('teamid')
+        team = Team.objects.get(teamid=teamId)
+        teamData = {}
+        folders = Folder.objects.filter(folderTeam=team, isRoot=1).order_by('-lastEditTime')
+        files = File.objects.filter(judge=1, fileTeam=team, fileFolder=None).order_by('-lastEditTimeRecord')
+        folderList = []
+        fileList = []
+        for folder in folders:
+            folderList.append({
+                'folder_id': int(folder.folderId),
+                'folder_name': folder.folderName,
+                'last_edit_time': folder.lastEditTime.strftime('%Y-%m-%d %H:%M:%S'),
+                'content': getFolderContent(int(folder.folderId))
             })
+        for file in files:
+            fileList.append({
+                'file_id': int(file.fileId),
+                'file_name': file.fileName,
+                'last_edit_time': file.lastEditTime
+            })
+        teamData = {'folder': folderList, 'file': fileList}
         projects = Project.objects.filter(projTeam=team)
         projects_data = []
         for project in projects:
@@ -559,26 +572,28 @@ def file_center(request):
                 'projName': project.projName,
                 'files_data': files_data
             })
-        return JsonResponse({'errno': 0, 'data': projects_data})
+        return JsonResponse({'errno': 0, 'team_data': teamData, 'project_data': projects_data})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
 
 
 def getFolderContent(folderId):
     thisFolder = Folder.objects.get(folderId=folderId)
-    content = []
-    folderList = Folder.objects.filter(fatherFolder=thisFolder).order_by('-lastEditTime')
-    fileList = File.objects.filter(fileFolder=thisFolder).order_by('-lastEditTimeRecord')
-    for folder in folderList:
-        content.append({
-            'type': 1,
+    folders = Folder.objects.filter(fatherFolder=thisFolder).order_by('-lastEditTime')
+    files = File.objects.filter(fileFolder=thisFolder).order_by('-lastEditTimeRecord')
+    folderList = []
+    fileList = []
+    for folder in folders:
+        folderList.append({
             'folder_id': int(folder.folderId),
-            'last_edit_time': folder.lastEditTime.strptime('%Y-%m-%d %H:%M:%S'),
+            'folder_name': folder.folderName,
+            'last_edit_time': folder.lastEditTime.strftime('%Y-%m-%d %H:%M:%S'),
             'content': getFolderContent(int(folder.folderId))
         })
-    for file in fileList:
-        content.append({
-            'type': 2,
+    for file in files:
+        fileList.append({
             'file_id': int(file.fileId),
-            'last_edit_time': file.lastEditTime,
+            'file_name': file.fileName,
+            'last_edit_time': file.lastEditTime
         })
+    return {'folder': folderList, 'file': fileList}
