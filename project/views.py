@@ -1,3 +1,4 @@
+import pdfkit
 from django.utils import timezone
 from django.core import serializers
 from django.shortcuts import render
@@ -597,3 +598,10 @@ def project_order(request):
         return JsonResponse({'errno': 0, 'data': data})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+
+
+@csrf_exempt
+def get_pdf(request):
+    config = pdfkit.configuration(wkhtmltopdf='D:\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
+    pdfkit.from_url('https://www.baidu.com', '1.pdf', configuration=config)
+    return JsonResponse({'errno': 0})

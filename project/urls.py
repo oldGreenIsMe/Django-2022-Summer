@@ -29,5 +29,6 @@ urlpatterns = {
     path('file_center', file_center),
     path('search_team_project', search_team_project),
     path('search_user_project', search_user_project),
-    path('project_order', project_order)
+    path('project_order', project_order),
+    path('get_pdf', get_pdf),
 }
