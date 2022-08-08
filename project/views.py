@@ -598,6 +598,7 @@ def get_pdf(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    file_name = request.POST.get('file_name')
     html_str = '<html>\n' + \
                '    <head>\n' + \
                '    <meta charset="utf-8">\n' + \
@@ -614,8 +615,6 @@ def get_pdf(request):
                '</body>\n' + \
                '</html>'
     file_dir = settings.MEDIA_ROOT + '/filePDF/'
-    file_time = time.strftime('%Y_%m_%d_%H_%M_%S')
-    file_name = file_time + '_' + str(user.userid) + '_' + str(file_id) + '.pdf'
     pdfkit.from_string(html_str, file_dir + file_name)
     file_response = FileResponse(open("media/filePDF/{name}".format(name=file_name), 'rb'), as_attachment=True,
                                  filename=file.fileName)
@@ -626,6 +625,6 @@ def get_pdf(request):
 def delete_pdf(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    file_name = request.POST.get('db_file_name')
+    file_name = request.POST.get('file_name')
     os.remove('media/filePDF/' + file_name)
     return JsonResponse({'errno': 0, 'msg': '删除服务器文件成功'})
