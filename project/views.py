@@ -360,8 +360,10 @@ def createFile(request):
     time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
     judge = int(request.POST.get('judge'))
     folderId = int(request.POST.get('folder_id'))
-    model_id = request.POST.get('model')
-    model_content = FileModel.objects.filter(model_id=model_id).first().model_content
+    model_content = ''
+    model_id = int(request.POST.get('model'))
+    if model_id != 0:
+        model_content = FileModel.objects.filter(model_id=model_id).first().model_content
     if judge == 0:  # 建立项目文档
         projects = Project.objects.filter(projId=request.POST.get('proj_id'))
         if not projects.exists():
