@@ -531,7 +531,7 @@ def search_user_project(request):
                 data.append({
                     'projName': project.projName,
                     'projId': project.projId,
-                    'photo': project.photo
+                    'photo': project.photo.url
                 })
         return JsonResponse({'errno': 0, 'data': data})
     else:
@@ -549,7 +549,7 @@ def search_team_project(request):
             data.append({
                 'projName': project.projName,
                 'projId': project.projId,
-                'photo': project.photo
+                'photo': project.photo.url
             })
         return JsonResponse({'errno': 0, 'data': data})
     else:
@@ -580,7 +580,7 @@ def project_order(request):
                 'projId': project.projId,
                 'projName': project.projName,
                 'startTime': project.startTime,
-                'photo': project.photo
+                'photo': project.photo.url
             })
         return JsonResponse({'errno': 0, 'data': data})
     else:
