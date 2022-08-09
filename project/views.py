@@ -1,4 +1,6 @@
 import os
+import tarfile
+
 import pdfkit
 import datetime
 from django.conf import settings
@@ -426,6 +428,35 @@ def modifyFile(request):
     file.lastEditTimeRecord = time
     file.save()
     return JsonResponse({'errno': 0, 'msg': '文档编辑成功'})
+
+
+@csrf_exempt
+def copy_project_file(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    file_id = request.POST.get('file_id')
+    files = File.objects.filter(fileId=file_id)
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    copy_to_proj = request.POST.get('copy_to_proj')
+    projs = Project.objects.filter(projId=copy_to_proj)
+    if not projs.exists():
+        return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+    proj = projs.first()
+    copy_time = request.POST.get('copy_time')
+    time = datetime.datetime.strptime(copy_time, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    file = files.first()
+    i = 1
+    new_name = file.fileName + '(' + str(i) + ')'
+    while File.objects.filter(projectId=proj.projId, fileName=new_name):
+        i += 1
+        new_name = file.fileName + '(' + str(i) + ')'
+    copy_file = File(fileName=new_name, fileCreator=user, content=file.content, create=copy_time,
+                     lastEditTime=copy_time, lastEditUser=user, lastEditTimeRecord=time, projectId=proj, judge=0,
+                     fileTeam=file.fileTeam, file_model=file.file_model)
+    copy_file.save()
+    return JsonResponse({'errno': 0, 'msg': '复制项目文件成功'})
 
 
 @csrf_exempt
