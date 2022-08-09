@@ -161,7 +161,6 @@ def detailProj(request):
                 'email': i.email
             }
         )
-    print(members)
     return JsonResponse({'errno': 0, 'msg': '查看成功', 'proj_name': proj_name, 'proj_creator': creator.username,
                          'proj_start': start, 'proj_end': end, 'proj_team': team.teamname, 'proj_team_id': team.teamid,
                          'proj_info': info, 'members': members, 'proj_photo': proj.photo.url})
