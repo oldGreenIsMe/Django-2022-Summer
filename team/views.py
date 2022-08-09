@@ -526,7 +526,7 @@ def moveFile(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     fileId = request.POST.get('file_id')
-    toFolderId = request.POST.get('to_folder_id')
+    toFolderId = int(request.POST.get('to_folder_id'))
     files = File.objects.filter(fileId=fileId)
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
@@ -542,13 +542,65 @@ def moveFile(request):
                            fileFolder=file.fileFolder).exists():
         return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
     editTimeStr = request.POST.get('edit_time')
-    editTime = datetime.datetime.strptime(editTimeStr, '%Y-%m-%d %H:%M:%S')
+    editTime = datetime.datetime.strptime(editTimeStr, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
     file.fileFolder = toFolder
     file.lastEditTime = editTimeStr
     file.lastEditUser = user
-    file.lastEditTimeRecord = editTime + datetime.timedelta(hours=8)
+    file.lastEditTimeRecord = editTime
     file.save()
     return JsonResponse({'errno': 0, 'msg': '文档移动成功'})
+
+
+@csrf_exempt
+def copyFolder(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    folderId = request.POST.get('folder_id')
+    toFolderId = int(request.POST.get('to_folder_id'))
+    editTimeStr = request.POST.get('edit_time')
+    editTime = datetime.datetime.strptime(editTimeStr, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
+    folder = Folder.objects.get(folderId=folderId)
+    if toFolderId == 0:
+        toFolder = None
+    else:
+        folders = Folder.objects.filter(folderId=toFolderId)
+        if not folders.exists():
+            return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
+        toFolder = folders.first()
+    newName = folder.folderName
+
+
+@csrf_exempt
+def copyTeamFile(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    fileId = request.POST.get('file_id')
+    toFolderId = int(request.POST.get('to_folder_id'))
+    editTimeStr = request.POST.get('edit_time')
+    editTime = datetime.datetime.strptime(editTimeStr, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
+    file = File.objects.get(fileId=fileId)
+    if toFolderId == 0:
+        toFolder = None
+    else:
+        folders = Folder.objects.filter(folderId=toFolderId)
+        if not folders.exists():
+            return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
+        toFolder = folders.first()
+    newName = file.fileName
+    if toFolder != file.fileFolder:
+        if File.objects.filter(fileName=newName, judge=1, fileTeam=file.fileTeam, fileFolder=toFolder).exists():
+            return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
+    else:
+        i = 1
+        while File.objects.filter(fileName=newName, judge=1, fileTeam=file.fileTeam, fileFolder=toFolder).exists():
+            newName = file.fileName + '(' + str(i) + ')'
+            i += 1
+    File.objects.create(fileName=newName, fileCreator=user, content=file.content, create=editTimeStr,
+                        lastEditTime=editTimeStr, lastEditUser=user, lastEditTimeRecord=editTime,
+                        judge=1, fileTeam=file.fileTeam, fileFolder=toFolder, new=2, file_model=file.file_model)
+    return JsonResponse({'errno': 0, 'msg': '文档复制成功'})
 
 
 @csrf_exempt
@@ -615,3 +667,17 @@ def getFolderContent(folderId):
             'last_edit_time': file.lastEditTime
         })
     return {'folder': folderList, 'file': fileList}
+
+
+def copyFolderMethod(oldFolder, newFolder, timeStr, time, user):
+    folderList = Folder.objects.filter(folderTeam=oldFolder.folderTeam, fatherFolder=oldFolder)
+    fileList = File.objects.filter(judge=1, fileTeam=oldFolder.folderTeam, fileFolder=oldFolder)
+    for folder in folderList:
+        midNewFolder = Folder(folderTeam=folder.folderTeam, folderName=folder.folderName, isRoot=2,
+                              fatherFolder=newFolder, folderCreator=folder.folderCreator, createTime=time,
+                              lastEditTime=time)
+        copyFolderMethod(folder, midNewFolder, timeStr, time, user)
+    for file in fileList:
+        File.objects.create(fileName=file.fileName, fileCreator=file.fileCreator, content=file.content, create=timeStr,
+                            lastEditTime=timeStr, lastEditUser=user, lastEditTimeRecord=time, judge=1,
+                            fileTeam=file.fileTeam, fileFolder=newFolder, new=2, file_model=file.file_model)
