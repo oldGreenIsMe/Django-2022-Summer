@@ -34,5 +34,6 @@ urlpatterns = {
     path('open_proto_preview', open_proto_preview),
     path('close_proto_preview', close_proto_preview),
     path('view_proto_preview', view_proto_preview),
-    path('view_preview_status', view_preview_status)
+    path('view_preview_status', view_preview_status),
+    path('copy_project_file', copy_project_file),
 }
