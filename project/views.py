@@ -599,7 +599,6 @@ def project_order(request):
 def get_pdf(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
-    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     file_id = request.POST.get('file_id')
     files = File.objects.filter(fileId=file_id)
     if not files.exists():
