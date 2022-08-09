@@ -241,7 +241,7 @@ def create_proto(request):
     canvas_height = request.POST.get('canvas_height', 500)
     canvas_width = request.POST.get('canvas_width', 500)
     proto_content = request.POST.get('proto_content', '[]')
-    protos = Prototype.objects.filter(protoName=proto_name, projectId=projid)
+    protos = Prototype.objects.filter(protoName=proto_name, projectId=proj)
     if protos.exists():
         return JsonResponse({'errno': 400010, 'msg': '设计原型名称重复'})
     proto = Prototype(projectId=proj, protoName=proto_name, protoCreator=users.first(), canvas_height=canvas_height,
