@@ -116,7 +116,8 @@ def invite_user(request):
         return JsonResponse({'errno': 300013, 'msg': '被邀请用户已在团队中'})
     if InviteMessage.objects.filter(user=user, team=team, status=1).exists():
         return JsonResponse({'errno': 300012, 'msg': '邀请或申请已存在'})
-    InviteMessage.objects.create(team=team, user=user, inviter=admin, timeOrder=timezone.now())
+    InviteMessage.objects.create(team=team, user=user, inviter=admin, timeOrder=timezone.now() +
+                                                                                datetime.timedelta(hours=8))
     inviteMemberSendMethod(admin.username, user.username, user.userid, team.teamname, team.teamid, user.email)
     return JsonResponse({'errno': 0, 'msg': '用户邀请已发送'})
 
@@ -133,11 +134,16 @@ def delete_member(request):
             return JsonResponse({'errno': 300004, 'msg': '非管理员，没有操作权限'})
         userid = request.POST.get('userid')
         user = User.objects.get(userid=userid)
+        if not UserTeam.objects.filter(user=user, team=team).exists():
+            return JsonResponse({'errno': 300020, 'msg': '用户不在团队中'})
         user_team = UserTeam.objects.get(user=user, team=team)
         if user_team.permission == 0:
             user.team_belonged.remove(team)
         else:
             return JsonResponse({'errno': 300005, 'msg': '被删用户是管理员，无法被删除'})
+        deleteNotice(admin.username, user.username, team.teamname, user.email)
+        InviteMessage.objects.create(team=team, inviter=admin, user=user, timeOrder=timezone.now() +
+                                                                                    datetime.timedelta(hours=8), type=3)
         return JsonResponse({'errno': 0, 'msg': '删除成员成功'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
@@ -282,10 +288,22 @@ def delete_team(request):
         userid = request.META.get('HTTP_USERID')
         teamid = request.POST.get('teamid')
         user = User.objects.get(userid=userid)
+        if not Team.objects.filter(teamid=teamid):
+            return JsonResponse({'errno': 300019, 'msg': '团队不存在'})
         team = Team.objects.get(teamid=teamid)
         user_team = UserTeam.objects.get(user=user, team=team)
         if user_team.permission != 2:
             return JsonResponse({'errno': 300010, 'msg': '非创造者，无权限删除队伍'})
+        users = UserTeam.objects.filter(team=team)
+        time = timezone.now() + datetime.timedelta(hours=8)
+        for user0 in users:
+            if user0.user != user:
+                deleteTeamNotice(user.username, user0.user.username, team.teamname, user0.user.email)
+                InviteMessage.objects.create(team=None, inviter=user, user=user0.user, timeOrder=time, type=4,
+                                             deleteTeamName=team.teamname)
+            else:
+                InviteMessage.objects.create(team=None, inviter=user, user=user0.user, timeOrder=time, type=4,
+                                             readStatus=2, deleteTeamName=team.teamname)
         team.delete()
         return JsonResponse({'errno': 0, 'msg': '删除团队成功'})
     else:
@@ -302,7 +320,7 @@ def handleInvitation(request):
         type = int(request.POST.get('type'))
         if type == 1 and not UserTeam.objects.filter(user=user, team=team).exists():
             UserTeam.objects.create(user=user, team=team, permission=0)
-        nowTime = timezone.now()
+        nowTime = timezone.now() + datetime.timedelta(hours=8)
         if inviteMessage.type == 2:
             invitationList = InviteMessage.objects.filter(user=user, team=team, type=2, status=1)
             for invitation in invitationList:
@@ -343,7 +361,7 @@ def apply_join(request):
         if InviteMessage.objects.filter(user=user, team=team, status=1).filter(Q(type=1) | Q(type=2)).exists():
             return JsonResponse({'errno': 300012, 'msg': '邀请或申请已存在'})
         userTeamList = UserTeam.objects.filter(team=team).filter(Q(permission=1) | Q(permission=2))
-        nowTime = timezone.now()
+        nowTime = timezone.now() + datetime.timedelta(hours=8)
         for userTeam in userTeamList:
             applyJoinMethod(userTeam.user.username, user.username, user.userid, team.teamname, team.teamid,
                             userTeam.user.email)
@@ -401,7 +419,7 @@ def acceptInvitation(request):
             return render(request, 'jumpPage1.html')
         else:
             return render(request, 'jumpPage2.html')
-    nowTime = timezone.now()
+    nowTime = timezone.now() + datetime.timedelta(hours=8)
     if judge == 1:
         invitation = InviteMessage.objects.get(user=user, team=team, type=1, status=1)
         invitation.timeOrder = nowTime
