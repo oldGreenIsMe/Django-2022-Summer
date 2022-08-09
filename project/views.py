@@ -1,6 +1,4 @@
 import os
-import tarfile
-
 import pdfkit
 import datetime
 from django.conf import settings
