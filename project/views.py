@@ -239,10 +239,14 @@ def create_proto(request):
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     proj = projs.first()
     proto_name = request.POST.get('proto_name')
+    canvas_height = request.POST.get('canvas_height', 500)
+    canvas_width = request.POST.get('canvas_width', 500)
+    proto_content = request.POST.get('proto_content', '[]')
     protos = Prototype.objects.filter(protoName=proto_name, projectId=projid)
     if protos.exists():
         return JsonResponse({'errno': 400010, 'msg': '设计原型名称重复'})
-    proto = Prototype(projectId=proj, protoName=proto_name, protoCreator=users.first())
+    proto = Prototype(projectId=proj, protoName=proto_name, protoCreator=users.first(), canvas_height=canvas_height,
+                      canvas_width=canvas_width, protoContent=proto_content)
     proto.save()
     return JsonResponse({'errno': 0, 'msg': '创建成功', 'proto_id': proto.prototypeId})
 
