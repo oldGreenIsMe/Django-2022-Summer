@@ -560,15 +560,32 @@ def copyFolder(request):
     toFolderId = int(request.POST.get('to_folder_id'))
     editTimeStr = request.POST.get('edit_time')
     editTime = datetime.datetime.strptime(editTimeStr, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
-    folder = Folder.objects.get(folderId=folderId)
+    folders = Folder.objects.filter(folderId=folderId)
+    if not folders.exists():
+        return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
+    folder = folders.first()
+    isRoot = 2
     if toFolderId == 0:
         toFolder = None
+        isRoot = 1
     else:
         folders = Folder.objects.filter(folderId=toFolderId)
         if not folders.exists():
             return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
         toFolder = folders.first()
     newName = folder.folderName
+    if toFolder != folder.fatherFolder:
+        if Folder.objects.filter(folderTeam=folder.folderTeam, folderName=newName, fatherFolder=toFolder).exists():
+            return JsonResponse({'errno': 700001, 'msg': '文件夹名称重复'})
+    else:
+        i = 1
+        while Folder.objects.filter(folderTeam=folder.folderTeam, folderName=newName, fatherFolder=toFolder).exists():
+            newName = folder.folderName + '(' + str(i) + ')'
+            i += 1
+    newFolder = Folder(folderTeam=folder.folderTeam, folderName=newName, isRoot=isRoot, fatherFolder=toFolder,
+                       folderCreator=user, createTime=editTime, lastEditTime=editTime)
+    copyFolderMethod(folder, newFolder, editTimeStr, editTime, user)
+    return JsonResponse({'errno': 0, 'msg': '文件夹复制成功'})
 
 
 @csrf_exempt
@@ -580,7 +597,10 @@ def copyTeamFile(request):
     toFolderId = int(request.POST.get('to_folder_id'))
     editTimeStr = request.POST.get('edit_time')
     editTime = datetime.datetime.strptime(editTimeStr, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
-    file = File.objects.get(fileId=fileId)
+    files = File.objects.filter(fileId=fileId)
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
     if toFolderId == 0:
         toFolder = None
     else:
