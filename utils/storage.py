@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 from django.core.files.storage import FileSystemStorage
-from django.http import HttpResponse
 
 
 class ImageStorage(FileSystemStorage):
@@ -14,7 +13,6 @@ class ImageStorage(FileSystemStorage):
     def _save(self, name, content):  # name为上传文件名称
         import os
         import time
-        import random
         # 文件扩展名
         ext = os.path.splitext(name)[1]
         # 文件目录
