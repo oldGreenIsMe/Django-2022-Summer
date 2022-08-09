@@ -140,7 +140,7 @@ def delete_member(request):
             user.team_belonged.remove(team)
         else:
             return JsonResponse({'errno': 300005, 'msg': '被删用户是管理员，无法被删除'})
-        deleteNotice(user.username, team.teamname, user.email)
+        deleteNotice(admin.username, user.username, team.teamname, user.email)
         InviteMessage.objects.create(team=team, inviter=admin, user=user, timeOrder=timezone.now(), type=3)
         return JsonResponse({'errno': 0, 'msg': '删除成员成功'})
     else:

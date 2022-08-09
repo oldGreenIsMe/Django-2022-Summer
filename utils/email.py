@@ -98,14 +98,16 @@ def applyJoinMethod(adminName, userName, userId, teamName, teamId, toEmail):
     mail.sendmail("805659773@qq.com", [toEmail], message.as_string())
 
 
-def deleteNotice(userName, teamName, toEmail):
+def deleteNotice(adminName, userName, teamName, toEmail):
     with open("./utils/deleteUser/deleteUser1.html", 'r', encoding='utf-8') as f:
         input1 = f.read()
     with open("./utils/deleteUser/deleteUser2.html", 'r', encoding='utf-8') as f:
         input2 = f.read()
     with open("./utils/deleteUser/deleteUser3.html", 'r', encoding='utf-8') as f:
         input3 = f.read()
-    data = input1 + userName + input2 + teamName + input3
+    with open("./utils/deleteUser/deleteUser4.html", 'r', encoding='utf-8') as f:
+        input4 = f.read()
+    data = input1 + userName + input2 + adminName + input3 + teamName + input4
     message = MIMEText(data, 'html', 'utf-8')
     message['Subject'] = Header('墨书通知邮件')
     message['From'] = Header('墨书团队')        # 邮件发送者
