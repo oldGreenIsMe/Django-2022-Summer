@@ -628,25 +628,7 @@ def file_center(request):
     if request.method == 'POST':
         teamId = request.POST.get('teamid')
         team = Team.objects.get(teamid=teamId)
-        teamData = {}
-        folders = Folder.objects.filter(folderTeam=team, isRoot=1).order_by('-lastEditTime')
-        files = File.objects.filter(judge=1, fileTeam=team, fileFolder=None).order_by('-lastEditTimeRecord')
-        folderList = []
-        fileList = []
-        for folder in folders:
-            folderList.append({
-                'folder_id': int(folder.folderId),
-                'folder_name': folder.folderName,
-                'last_edit_time': folder.lastEditTime.strftime('%Y-%m-%d %H:%M:%S'),
-                'content': getFolderContent(int(folder.folderId))
-            })
-        for file in files:
-            fileList.append({
-                'file_id': int(file.fileId),
-                'file_name': file.fileName,
-                'last_edit_time': file.lastEditTime
-            })
-        teamData = {'folder': folderList, 'file': fileList}
+        teamData = getFolderContent(0)
         projects = Project.objects.filter(projTeam=team)
         projects_data = []
         for project in projects:
@@ -668,25 +650,30 @@ def file_center(request):
 
 
 def getFolderContent(folderId):
-    thisFolder = Folder.objects.get(folderId=folderId)
+    data = []
+    if folderId == 0:
+        thisFolder = None
+    else:
+        thisFolder = Folder.objects.get(folderId=folderId)
     folders = Folder.objects.filter(fatherFolder=thisFolder).order_by('-lastEditTime')
     files = File.objects.filter(fileFolder=thisFolder).order_by('-lastEditTimeRecord')
-    folderList = []
-    fileList = []
     for folder in folders:
-        folderList.append({
-            'folder_id': int(folder.folderId),
-            'folder_name': folder.folderName,
+        data.append({
+            'file_id': int(folder.folderId),
+            'file_name': folder.folderName,
+            'file_flag': 1,
             'last_edit_time': folder.lastEditTime.strftime('%Y-%m-%d %H:%M:%S'),
-            'content': getFolderContent(int(folder.folderId))
+            'file_list': getFolderContent(folder.folderId)
         })
     for file in files:
-        fileList.append({
+        data.append({
             'file_id': int(file.fileId),
             'file_name': file.fileName,
-            'last_edit_time': file.lastEditTime
+            'file_flag': 0,
+            'last_edit_time': file.lastEditTime,
+            'file_list': []
         })
-    return {'folder': folderList, 'file': fileList}
+    return data
 
 
 def copyFolderMethod(oldFolder, newFolder, timeStr, time, user):
