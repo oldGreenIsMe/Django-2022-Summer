@@ -622,11 +622,9 @@ def get_pdf(request):
                '</body>\n' + \
                '</html>'
     file_dir = settings.MEDIA_ROOT + '/filePDF/'
-    config = pdfkit.configuration(wkhtmltopdf='D:\\wkhtmltopdf\\bin\\wkhtmltopdf.exe')
-    pdfkit.from_string(html_str, file_dir + file_name, configuration=config)
+    pdfkit.from_string(html_str, file_dir + file_name)
     file_response = FileResponse(open("media/filePDF/{name}".format(name=file_name), 'rb'), as_attachment=True,
                                  filename=file.fileName + '.pdf')
-    file_response['Content-Type'] = 'application/pdf'
     return file_response
 
 
