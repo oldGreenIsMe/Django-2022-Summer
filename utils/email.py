@@ -1,11 +1,9 @@
 import random
 import smtplib
-import urllib.request
+from authlib.jose import jwt
 from email.header import Header
 from django.conf import settings
 from email.mime.text import MIMEText
-from django.core.mail import send_mail
-from authlib.jose import jwt, JoseError
 
 
 def sendVerifyCodeMethod(toEmail, mode):
@@ -45,15 +43,15 @@ def inviteMemberSendMethod(invitorName, userName, userId, teamName, teamId, toEm
     key = settings.SECRETS['signing']['key']
     token = jwt.encode(header=header, payload=data, key=key)
     dstUrl = verifyUrl + '?token=' + token.decode()
-    with open("./utils/teamManage/teamInvite1.html", 'r', encoding='utf-8') as f:
+    with open("./utils/teamInvite/teamInvite1.html", 'r', encoding='utf-8') as f:
         input1 = f.read()
-    with open("./utils/teamManage/teamInvite2.html", 'r', encoding='utf-8') as f:
+    with open("./utils/teamInvite/teamInvite2.html", 'r', encoding='utf-8') as f:
         input2 = f.read()
-    with open("./utils/teamManage/teamInvite3.html", 'r', encoding='utf-8') as f:
+    with open("./utils/teamInvite/teamInvite3.html", 'r', encoding='utf-8') as f:
         input3 = f.read()
-    with open("./utils/teamManage/teamInvite4.html", 'r', encoding='utf-8') as f:
+    with open("./utils/teamInvite/teamInvite4.html", 'r', encoding='utf-8') as f:
         input4 = f.read()
-    with open("./utils/teamManage/teamInvite5.html", 'r', encoding='utf-8') as f:
+    with open("./utils/teamInvite/teamInvite5.html", 'r', encoding='utf-8') as f:
         input5 = f.read()
     msg = input1 + userName + input2 + invitorName + input3 + teamName + input4 + dstUrl + input5
     message = MIMEText(msg, 'html', 'utf-8')
@@ -93,6 +91,24 @@ def applyJoinMethod(adminName, userName, userId, teamName, teamId, toEmail):
     message = MIMEText(msg, 'html', 'utf-8')
     message['Subject'] = Header('墨书申请加入团队邮件')
     message['From'] = Header('墨书团队')
+    message['To'] = Header(toEmail)
+    mail = smtplib.SMTP()
+    mail.connect("smtp.qq.com")
+    mail.login("805659773@qq.com", settings.SECRETS['email_key'])
+    mail.sendmail("805659773@qq.com", [toEmail], message.as_string())
+
+
+def deleteNotice(userName, teamName, toEmail):
+    with open("./utils/deleteUser/deleteUser1.html", 'r', encoding='utf-8') as f:
+        input1 = f.read()
+    with open("./utils/deleteUser/deleteUser2.html", 'r', encoding='utf-8') as f:
+        input2 = f.read()
+    with open("./utils/deleteUser/deleteUser3.html", 'r', encoding='utf-8') as f:
+        input3 = f.read()
+    data = input1 + userName + input2 + teamName + input3
+    message = MIMEText(data, 'html', 'utf-8')
+    message['Subject'] = Header('墨书通知邮件')
+    message['From'] = Header('墨书团队')        # 邮件发送者
     message['To'] = Header(toEmail)
     mail = smtplib.SMTP()
     mail.connect("smtp.qq.com")

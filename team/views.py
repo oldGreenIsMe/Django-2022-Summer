@@ -133,11 +133,14 @@ def delete_member(request):
             return JsonResponse({'errno': 300004, 'msg': '非管理员，没有操作权限'})
         userid = request.POST.get('userid')
         user = User.objects.get(userid=userid)
+        if not UserTeam.objects.filter(user=user, team=team).exists():
+            return JsonResponse({'errno': 300020, 'msg': '用户不在团队中'})
         user_team = UserTeam.objects.get(user=user, team=team)
         if user_team.permission == 0:
             user.team_belonged.remove(team)
         else:
             return JsonResponse({'errno': 300005, 'msg': '被删用户是管理员，无法被删除'})
+        deleteNotice(user.username, team.teamname, user.email)
         return JsonResponse({'errno': 0, 'msg': '删除成员成功'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
