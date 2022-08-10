@@ -649,9 +649,10 @@ def edit_file(request):
     if model_id != 0:
         model = FileModel.objects.filter(model_id=model_id).first().model_content
     if file.new == 1 or file.new == 2:
+        new = file.new
         file.new = 0
         file.save()
-        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': file.new, 'model': model})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': new, 'model': model})
     else:
         return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': file.new, 'model': model})
 
