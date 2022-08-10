@@ -5,8 +5,8 @@ from django.conf import settings
 from django.utils import timezone
 from django.http import JsonResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
-from project.models import *
 from team.models import *
+from project.models import *
 
 
 @csrf_exempt
