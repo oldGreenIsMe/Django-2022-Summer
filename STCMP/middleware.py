@@ -8,7 +8,7 @@ except ImportError:
 
 
 API_WHITELIST = ["/api/team/register", "/api/team/login", "/api/team/sendVerifyCode", "/api/team/acceptInvitation",
-                 "/api/project/get_pdf"]
+                 "/api/project/get_pdf", "/api/project/view_proto_preview"]
 
 
 class AuthorizeMiddleware(MiddlewareMixin):
