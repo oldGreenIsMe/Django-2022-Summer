@@ -28,5 +28,7 @@ urlpatterns = {
     path('moveFile', moveFile),
     path('copyFolder', copyFolder),
     path('copyTeamFile', copyTeamFile),
+    path('deleteFolder', deleteFolder),
+    path('deleteTeamFile', deleteTeamFile),
     path('file_center', file_center),
 }

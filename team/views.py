@@ -651,6 +651,32 @@ def copyTeamFile(request):
 
 
 @csrf_exempt
+def deleteFolder(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    folderId = request.POST.get('folder_id')
+    folders = Folder.objects.filter(folderId=folderId)
+    if not folders.exists():
+        return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
+    folder = folders.first()
+    folder.delete()
+    return JsonResponse({'errno': 0, 'msg': '文件夹删除成功'})
+
+
+@csrf_exempt
+def deleteTeamFile(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    fileId = request.POST.get('file_id')
+    files = File.objects.filter(fileId=fileId)
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
+    file.delete()
+    return JsonResponse({'errno': 0, 'msg': '团队文档删除成功'})
+
+
+@csrf_exempt
 def file_center(request):
     if request.method == 'POST':
         teamId = request.POST.get('teamid')
