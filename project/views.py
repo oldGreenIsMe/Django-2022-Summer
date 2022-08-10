@@ -529,7 +529,7 @@ def copy_project_file(request):
         new_name = file.fileName + '(' + str(i) + ')'
     copy_file = File(fileName=new_name, fileCreator=user, content=file.content, create=copy_time,
                      lastEditTime=copy_time, lastEditUser=user, lastEditTimeRecord=time, projectId=proj, judge=0,
-                     fileTeam=file.fileTeam, file_model=file.file_model)
+                     fileTeam=file.fileTeam, new=2, file_model=file.file_model)
     copy_file.save()
     return JsonResponse({'errno': 0, 'msg': '复制项目文件成功'})
 
