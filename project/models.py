@@ -15,7 +15,7 @@ class Project(models.Model):
     startTime = models.CharField(max_length=20, null=True, blank=True)
     startTimeRecord = models.DateTimeField(null=True, blank=True)
     endTime = models.CharField(max_length=20, null=True, blank=True)
-    status = models.IntegerField(default=1)     # 用于判断是否被删除到回收站中 1-未被删除 2-回收站中
+    status = models.IntegerField(default=1)             # 用于判断是否被删除到回收站中 1-未被删除 2-回收站中
     # 记录删除该项目的用户及删除时间
     deletePerson = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='deletePerson')
@@ -23,7 +23,7 @@ class Project(models.Model):
     deleteTimeRecord = models.DateTimeField(null=True, blank=True)
     photo = models.ImageField(upload_to='projImg', default='projImg/default.png', storage=storage.ImageStorage())
     copy_num = models.IntegerField(default=0)
-    preview_status = models.IntegerField(default=0)  # 用于判断当前项目的预览状态, 0-无, 1-关闭, 2-打开
+    preview_status = models.IntegerField(default=0)     # 用于判断当前项目的预览状态, 0-无, 1-关闭, 2-打开
 
 
 # 文件夹类
