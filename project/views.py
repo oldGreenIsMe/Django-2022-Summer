@@ -51,7 +51,7 @@ def modifyProjPhoto(request):
         projPhotoDelete(instance=project)
     project.photo = photo
     project.save()
-    return JsonResponse({'errno': 0, 'msg': '图片修改成功'})
+    return JsonResponse({'errno': 0, 'msg': '图片修改成功', 'photo': project.photo.url})
 
 
 @csrf_exempt
