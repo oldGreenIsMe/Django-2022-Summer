@@ -529,7 +529,7 @@ def copy_project_file(request):
         new_name = file.fileName + '(' + str(i) + ')'
     copy_file = File(fileName=new_name, fileCreator=user, content=file.content, create=copy_time,
                      lastEditTime=copy_time, lastEditUser=user, lastEditTimeRecord=time, projectId=proj, judge=0,
-                     fileTeam=file.fileTeam, file_model=file.file_model, new=2)
+                     fileTeam=file.fileTeam, new=2, file_model=file.file_model)
     copy_file.save()
     return JsonResponse({'errno': 0, 'msg': '复制项目文件成功'})
 
@@ -837,4 +837,3 @@ def view_preview_status(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     project = Project.objects.get(projId=request.POST.get('proj_id'))
     return JsonResponse({'errno': 0, 'preview_status': project.preview_status})
-
