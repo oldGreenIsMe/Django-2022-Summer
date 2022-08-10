@@ -679,6 +679,7 @@ def file_center(request):
             projects_data.append({
                 'projectId': project.projId,
                 'projName': project.projName,
+                'type_flag': 0,
                 'files_data': files_data
             })
         return JsonResponse({'errno': 0, 'team_data': teamData, 'project_data': projects_data})
