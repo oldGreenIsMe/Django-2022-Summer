@@ -16,6 +16,8 @@ def createProj(request):
     projName = request.POST.get('proj_name')
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     projTeam = Team.objects.get(teamid=request.POST.get('team_id'))
+    if not UserTeam.objects.filter(user=user, projTeam=projTeam).exists():
+        return JsonResponse({'errno': 500001, 'msg': '没有权限创建项目'})
     projInfo = request.POST.get('proj_info')
     if projInfo is None or projInfo == "":
         projInfo = "暂无简介"
@@ -40,6 +42,10 @@ def modifyProjPhoto(request):
     if not projects.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     project = projects.first()
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    team = project.projTeam
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
     photo = request.FILES.get('photo')
     if project.photo != 'projImg/default.png':
         projPhotoDelete(instance=project)
@@ -57,6 +63,10 @@ def modifyProjInfo(request):
     if not projects.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     project = projects.first()
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    team = project.projTeam
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
     projName = request.POST.get('proj_name')
     projInfo = request.POST.get('proj_info')
     if projInfo is None or projInfo == "":
@@ -87,6 +97,9 @@ def deleteProj(request):
     if not projects.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     project = projects.first()
+    team = project.projTeam
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
     project.status = 2
     project.deletePerson = user
     project.deleteTime = time
@@ -104,6 +117,10 @@ def clearProj(request):
     if not projects.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     project = projects.first()
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    team = project.projTeam
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
     project.delete()
     return JsonResponse({'errno': 0, 'msg': '项目删除成功'})
 
@@ -134,7 +151,6 @@ def detailProj(request):
     if request.method != 'POST':
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     users = User.objects.filter(userid=request.META.get('HTTP_USERID'))
-
     projid = request.POST.get('proj_id')
     projs = Project.objects.filter(projId=projid)
     if not projs.exists():
@@ -148,7 +164,7 @@ def detailProj(request):
     team = proj.projTeam
     member_set = team.user_set.all()
     if not member_set.filter(userid=users.first().userid).exists():
-        return JsonResponse({'errno': 500002, 'msg': '没有权限查看该项目'})
+        return JsonResponse({'errno': 500003, 'msg': '没有权限查看该项目'})
     members = []
     for i in member_set:
         members.append(
@@ -174,6 +190,9 @@ def getDeletedProjList(request):
     if not teams.exists():
         return JsonResponse({'errno': 400005, 'msg': '团队不存在'})
     team = teams.first()
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500004, 'msg': '没有权限查看该信息'})
     projList = team.project_set.all().order_by('-deleteTimeRecord')
     data = []
     for proj in projList:
@@ -201,6 +220,9 @@ def copy_project(request):
     if not projs.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     proj = projs.first()
+    team = proj.projTeam
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
     copy_num = proj.copy_num
     if Project.objects.filter(projName=proj.projName + '(' + str(copy_num + 1) + ')', projTeam=proj.projTeam).exists():
         return JsonResponse({'errno': 600001, 'msg': '复制时发现同名项目'})
@@ -237,6 +259,10 @@ def create_proto(request):
     if not projs.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     proj = projs.first()
+    user = users.first()
+    team = proj.projTeam
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
     proto_name = request.POST.get('proto_name')
     canvas_height = request.POST.get('canvas_height', 500)
     canvas_width = request.POST.get('canvas_width', 500)
@@ -258,10 +284,15 @@ def upload_proto(request):
     protos = Prototype.objects.filter(prototypeId=proto_id)
     if not protos.exists():
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
+    proto = protos.first()
+    proj = proto.projectId
+    team = proj.projTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
     proto_content = request.POST.get('proto_content')
     canvas_width = request.POST.get('canvas_width')
     canvas_height = request.POST.get('canvas_height')
-    proto = protos.first()
     proto.protoContent = proto_content
     proto.canvas_width = canvas_width
     proto.canvas_height = canvas_height
@@ -278,6 +309,11 @@ def get_proto(request):
     if not protos.exists():
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
     proto = protos.first()
+    proj = proto.projectId
+    team = proj.projTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500004, 'msg': '没有权限查看该信息'})
     proto_content = proto.protoContent
     canvas_width = proto.canvas_width
     canvas_height = proto.canvas_height
@@ -292,6 +328,11 @@ def proj_proto(request):
     proj_id = request.POST.get('proj_id')
     if not Project.objects.filter(projId=proj_id).exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
+    proj = Project.objects.filter(projId=proj_id).first()
+    team = proj.projTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500004, 'msg': '没有权限查看该信息'})
     protos = Prototype.objects.filter(projectId=proj_id)
     protos_info = []
     for proto in protos:
@@ -316,8 +357,13 @@ def rename_proto(request):
     protos = Prototype.objects.filter(prototypeId=proto_id)
     if not protos.exists():
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
-    new_name = request.POST.get('new_name')
     proto = protos.first()
+    proj = proto.projectId
+    team = proj.projTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
+    new_name = request.POST.get('new_name')
     projid = proto.projectId
     if Prototype.objects.filter(protoName=new_name, projectId=projid).exists():
         return JsonResponse({'errno': 400010, 'msg': '设计原型名称重复'})
@@ -335,6 +381,11 @@ def delete_proto(request):
     if not protos.exists():
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
     proto = protos.first()
+    proj = proto.projectId
+    team = proj.projTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
     proto.delete()
     return JsonResponse({'errno': 0, 'msg': '删除成功'})
 
@@ -348,6 +399,11 @@ def upload_proto_photo(request):
     if not protos.exists():
         return JsonResponse({'errno': 300001, 'msg': '设计原型不存在'})
     proto = protos.first()
+    proj = proto.projectId
+    team = proj.projTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500002, 'msg': '没有权限操作该项目'})
     photo = request.POST.get('base64_photo')
     proto.protoPhoto = photo
     proto.save()
@@ -361,6 +417,8 @@ def createFile(request):
     fileName = request.POST.get('file_name')
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     team = Team.objects.get(teamid=request.POST.get('teamid'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500005, 'msg': '没有权限创建文档'})
     createTime = request.POST.get('create_time')
     time = datetime.datetime.strptime(createTime, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
     judge = int(request.POST.get('judge'))
@@ -407,6 +465,11 @@ def deleteFile(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    proj = file.projectId
+    team = proj.projTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500006, 'msg': '没有权限操作该文档'})
     file.delete()
     return JsonResponse({'errno': 0, 'msg': '文档删除成功'})
 
@@ -419,6 +482,11 @@ def modifyFile(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    proj = file.projectId
+    team = proj.projTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500006, 'msg': '没有权限操作该文档'})
     content = request.POST.get('content')
     modifyTime = request.POST.get('modify_time')
     time = datetime.datetime.strptime(modifyTime, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
@@ -444,10 +512,17 @@ def copy_project_file(request):
     if not projs.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     proj = projs.first()
+    file = files.first()
+    file_team = file.fileTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=file_team).exists():
+        return JsonResponse({'errno': 500006, 'msg': '没有权限操作该文档'})
+    if proj.projTeam.teamid != file_team.teamid:
+        return JsonResponse({'errno': 500006, 'msg': '没有权限操作该文档'})
     copy_time = request.POST.get('copy_time')
     time = datetime.datetime.strptime(copy_time, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
-    file = files.first()
+
     i = 1
     new_name = file.fileName + '(' + str(i) + ')'
     while File.objects.filter(projectId=proj.projId, fileName=new_name):
@@ -476,11 +551,16 @@ def renameFile(request):
         if not projects.exists():
             return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
         project = projects.first()
+        team = project.projTeam
+        if not UserTeam.objects.filter(user=user, team=team).exists():
+            return JsonResponse({'errno': 500006, 'msg': '没有权限操作该文档'})
         files = File.objects.filter(projectId=project.projId, fileName=fileName, judge=0)
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
     else:
         team = Team.objects.get(teamid=request.POST.get('teamid'))
+        if not UserTeam.objects.filter(user=user, team=team).exists():
+            return JsonResponse({'errno': 500006, 'msg': '没有权限操作该文档'})
         files = File.objects.filter(fileTeam=team, fileName=fileName, judge=1, fileFolder=file.fileFolder)
         if files.first() is not None:
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
@@ -500,6 +580,10 @@ def getFileList(request):
     if not projects.exists():
         return JsonResponse({'errno': 400002, 'msg': '项目不存在'})
     project = projects.first()
+    team = project.projTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500004, 'msg': '没有权限查看该信息'})
     fileList = project.file_set.all().order_by('-lastEditTimeRecord')
     data = []
     for file in fileList:
@@ -523,6 +607,10 @@ def getFileContent(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    team = file.fileTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500004, 'msg': '没有权限查看该信息'})
     return JsonResponse({'errno': 0, 'msg': '文档内容获取成功', 'content': file.content})
 
 
@@ -533,8 +621,13 @@ def upload_file_image(request):
     files = File.objects.filter(fileId=request.POST.get('file_id'))
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
+    team = file.fileTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500004, 'msg': '没有权限查看该信息'})
     image = request.FILES.get('image')
-    file_image = FileImage(file=files.first(), image=image)
+    file_image = FileImage(file=file, image=image)
     file_image.save()
     return JsonResponse({'errno': 0, 'msg': '上传图片成功', 'url': file_image.image.url})
 
@@ -548,6 +641,10 @@ def edit_file(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    team = file.fileTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500004, 'msg': '没有权限查看该信息'})
     model_id = file.file_model
     model = ''
     if model_id != 0:
@@ -585,6 +682,9 @@ def search_team_project(request):
     if request.method == 'POST':
         projName = request.POST.get('projName')
         team = Team.objects.get(teamid=request.POST.get('teamid'))
+        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        if not UserTeam.objects.filter(user=user, team=team).exists():
+            return JsonResponse({'errno': 500004, 'msg': '没有权限查看该信息'})
         projects = Project.objects.filter(projTeam=team, status=1, projName__icontains=projName)
         data = []
         for project in projects:
@@ -603,6 +703,9 @@ def project_order(request):
     if request.method == 'POST':
         according = request.POST.get('according')
         team = Team.objects.get(teamid=request.POST.get('teamid'))
+        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        if not UserTeam.objects.filter(user=user, team=team).exists():
+            return JsonResponse({'errno': 500010, 'msg': '没有权限进行该操作'})
         projects = []
         if according == '创建时间从早到晚':
             projects = team.project_set.filter(status=1).order_by('projId')
@@ -638,6 +741,10 @@ def get_pdf(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    team = file.fileTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500006, 'msg': '没有权限操作该文档'})
     file_name = request.POST.get('file_name')
     html_str = '<html>\n' + \
                '    <head>\n' + \

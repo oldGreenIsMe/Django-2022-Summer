@@ -441,6 +441,8 @@ def createFolder(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     team = Team.objects.get(teamid=request.POST.get('team_id'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500010, 'msg': '没有权限执行该信操作'})
     isRoot = int(request.POST.get('is_root'))
     fatherFolder = None
     folderName = request.POST.get('folder_name')
@@ -465,6 +467,10 @@ def renameFolder(request):
     if not folders.exists():
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
     folder = folders.first()
+    team = folder.folderTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500010, 'msg': '没有权限进行该操作'})
     editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M:%S')
     editTime = editTime + datetime.timedelta(hours=8)
     if folder.folderName == folderName:
@@ -487,6 +493,10 @@ def deleteFolder(request):
     if not folders.exists():
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
     folder = folders.first()
+    team = folder.folderTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
     folder.delete()
     return JsonResponse({'errno': 0, 'msg': '文件夹删除成功'})
 
@@ -501,6 +511,10 @@ def moveFolder(request):
     if not folders.exists():
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
     folder = folders.first()
+    team = folder.folderTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
     editTime = datetime.datetime.strptime(request.POST.get('edit_time'), '%Y-%m-%d %H:%M:%S')
     if toFolderId == 0:
         toFolder = None
@@ -531,6 +545,10 @@ def moveFile(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    team = file.fileTeam
+    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
     if toFolderId == 0:
         toFolder = None
     else:
@@ -564,6 +582,9 @@ def copyFolder(request):
     if not folders.exists():
         return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
     folder = folders.first()
+    team = folder.folderTeam
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
     isRoot = 2
     if toFolderId == 0:
         toFolder = None
@@ -573,6 +594,8 @@ def copyFolder(request):
         if not folders.exists():
             return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
         toFolder = folders.first()
+        if toFolder.folderTeam.teamid != team.teamid:
+            return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
     newName = folder.folderName
     if toFolder != folder.fatherFolder:
         if Folder.objects.filter(folderTeam=folder.folderTeam, folderName=newName, fatherFolder=toFolder).exists():
@@ -601,6 +624,9 @@ def copyTeamFile(request):
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
+    team = file.fileTeam
+    if not UserTeam.objects.filter(user=user, team=team).exists():
+        return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
     if toFolderId == 0:
         toFolder = None
     else:
@@ -608,6 +634,8 @@ def copyTeamFile(request):
         if not folders.exists():
             return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
         toFolder = folders.first()
+        if toFolder.folderTeam.teamid != team.teamid:
+            return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
     newName = file.fileName
     if toFolder != file.fileFolder:
         if File.objects.filter(fileName=newName, judge=1, fileTeam=file.fileTeam, fileFolder=toFolder).exists():
@@ -628,6 +656,9 @@ def file_center(request):
     if request.method == 'POST':
         teamId = request.POST.get('teamid')
         team = Team.objects.get(teamid=teamId)
+        user = User.objects.get(userid=request.META.get('HTTP_USERID'))
+        if not UserTeam.objects.filter(user=user, team=team).exists():
+            return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
         teamData = getFolderContent(0, team)
         projects = Project.objects.filter(projTeam=team, status=1)
         projects_data = []
