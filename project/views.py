@@ -742,9 +742,6 @@ def get_pdf(request):
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
     file = files.first()
     team = file.fileTeam
-    user = User.objects.get(userid=request.META.get('HTTP_USERID'))
-    if not UserTeam.objects.filter(user=user, team=team).exists():
-        return JsonResponse({'errno': 500006, 'msg': '没有权限操作该文档'})
     file_name = request.POST.get('file_name')
     html_str = '<html>\n' + \
                '    <head>\n' + \
