@@ -593,8 +593,6 @@ def copyFolder(request):
         if not folders.exists():
             return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
         toFolder = folders.first()
-        if toFolder.folderTeam.teamid != team.teamid:
-            return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
     newName = folder.folderName
     if toFolder != folder.fatherFolder:
         if Folder.objects.filter(folderTeam=folder.folderTeam, folderName=newName, fatherFolder=toFolder).exists():
@@ -606,6 +604,7 @@ def copyFolder(request):
             i += 1
     newFolder = Folder(folderTeam=folder.folderTeam, folderName=newName, isRoot=isRoot, fatherFolder=toFolder,
                        folderCreator=user, createTime=editTime, lastEditTime=editTime)
+    newFolder.save()
     copyFolderMethod(folder, newFolder, editTimeStr, editTime, user)
     return JsonResponse({'errno': 0, 'msg': '文件夹复制成功'})
 
@@ -754,6 +753,7 @@ def copyFolderMethod(oldFolder, newFolder, timeStr, time, user):
         midNewFolder = Folder(folderTeam=folder.folderTeam, folderName=folder.folderName, isRoot=2,
                               fatherFolder=newFolder, folderCreator=folder.folderCreator, createTime=time,
                               lastEditTime=time)
+        midNewFolder.save()
         copyFolderMethod(folder, midNewFolder, timeStr, time, user)
     for file in fileList:
         File.objects.create(fileName=file.fileName, fileCreator=file.fileCreator, content=file.content, create=timeStr,
