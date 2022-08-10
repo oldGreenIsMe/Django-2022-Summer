@@ -68,7 +68,7 @@ class FileImage(models.Model):
 class Prototype(models.Model):
     prototypeId = models.AutoField(primary_key=True)
     projectId = models.ForeignKey(to=Project, null=False, blank=False, on_delete=models.CASCADE)
-    protoName = models.CharField(max_length=50, unique=True, default='proto_default')
+    protoName = models.CharField(max_length=50, default='proto_default')
     protoCreator = models.ForeignKey(to=User, null=True, blank=True, on_delete=models.CASCADE)
     protoContent = models.TextField(null=True, blank=True, default='[]')
     protoPhoto = models.TextField(null=True, blank=True)
