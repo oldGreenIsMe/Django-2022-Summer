@@ -648,12 +648,12 @@ def edit_file(request):
     model = ''
     if model_id != 0:
         model = FileModel.objects.filter(model_id=model_id).first().model_content
-    if file.new == 1:
+    if file.new == 1 or file.new == 2:
         file.new = 0
         file.save()
-        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 1, 'model': model})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': file.new, 'model': model})
     else:
-        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': 0, 'model': model})
+        return JsonResponse({'errno': 0, 'msg': '获取文档状态成功', 'new': file.new, 'model': model})
 
 
 @csrf_exempt
