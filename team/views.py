@@ -672,6 +672,7 @@ def file_center(request):
                     'file_id': file.fileId,
                     'file_name': file.fileName,
                     'file_flag': 0,
+                    'type_flag': 0,
                     'last_edit_time': file.lastEditTime,
                     'project_id': project.projId
                 })
@@ -692,7 +693,7 @@ def getFolderContent(folderId, team):
     else:
         thisFolder = Folder.objects.get(folderId=folderId)
     folders = Folder.objects.filter(folderTeam=team, fatherFolder=thisFolder).order_by('-lastEditTime')
-    files = File.objects.filter(fileTeam=team, fileFolder=thisFolder).order_by('-lastEditTimeRecord')
+    files = File.objects.filter(fileTeam=team, fileFolder=thisFolder, judge=1).order_by('-lastEditTimeRecord')
     for folder in folders:
         midId = 0
         if folder.fatherFolder is not None:
@@ -701,6 +702,7 @@ def getFolderContent(folderId, team):
             'file_id': int(folder.folderId),
             'file_name': folder.folderName,
             'file_flag': 1,
+            'type_flag': 1,
             'last_edit_time': folder.lastEditTime.strftime('%Y-%m-%d %H:%M:%S'),
             'parent_folder_id': midId,
             'file_list': getFolderContent(folder.folderId, folder.folderTeam)
@@ -713,6 +715,7 @@ def getFolderContent(folderId, team):
             'file_id': int(file.fileId),
             'file_name': file.fileName,
             'file_flag': 0,
+            'type_flag': 1,
             'last_edit_time': file.lastEditTime,
             'parent_folder_id': midId,
             'file_list': []
