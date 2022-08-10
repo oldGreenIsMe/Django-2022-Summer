@@ -481,6 +481,7 @@ def modifyFile(request):
     files = File.objects.filter(fileId=request.POST.get('file_id'))
     if not files.exists():
         return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
     team = file.fileTeam
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     if not UserTeam.objects.filter(user=user, team=team).exists():
