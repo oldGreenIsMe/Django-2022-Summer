@@ -139,3 +139,23 @@ def deleteTeamNotice(adminName, userName, teamName, toEmail):
     mail.connect("smtp.qq.com")
     mail.login("805659773@qq.com", settings.SECRETS['email_key'])
     mail.sendmail("805659773@qq.com", [toEmail], message.as_string())
+
+
+def authorizeAdminNotice(adminName, userName, teamName, toEmail):
+    with open("./utils/authorizeAdmin/authorizeAdmin1.html", 'r', encoding='utf-8') as f:
+        input1 = f.read()
+    with open("./utils/authorizeAdmin/authorizeAdmin2.html", 'r', encoding='utf-8') as f:
+        input2 = f.read()
+    with open("./utils/authorizeAdmin/authorizeAdmin3.html", 'r', encoding='utf-8') as f:
+        input3 = f.read()
+    with open("./utils/authorizeAdmin/authorizeAdmin4.html", 'r', encoding='utf-8') as f:
+        input4 = f.read()
+    data = input1 + userName + input2 + adminName + input3 + teamName + input4
+    message = MIMEText(data, 'html', 'utf-8')
+    message['Subject'] = Header('墨书-授权成为管理员通知邮件')
+    message['From'] = Header('墨书团队')        # 邮件发送者
+    message['To'] = Header(toEmail)
+    mail = smtplib.SMTP()
+    mail.connect("smtp.qq.com")
+    mail.login("805659773@qq.com", settings.SECRETS['email_key'])
+    mail.sendmail("805659773@qq.com", [toEmail], message.as_string())

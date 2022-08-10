@@ -77,6 +77,7 @@ def authorize_admin(request):
         if user_team.permission == 0:
             user_team.permission = 1
             user_team.save()
+        authorizeAdminNotice(creator.username, user.username, team.teamname, user.email)
         return JsonResponse({'errno': 0, 'msg': '管理员授权成功'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
