@@ -437,7 +437,7 @@ def createFile(request):
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
         file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime,
                     lastEditTime=createTime, lastEditUser=user, lastEditTimeRecord=time, projectId=project, judge=0,
-                    fileTeam=team, file_model=model_id)
+                    fileTeam=team, file_model=model_id, new=1)
         file.save()
     else:           # 建立团队文档
         if folderId == 0:
@@ -452,7 +452,7 @@ def createFile(request):
             return JsonResponse({'errno': 400003, 'msg': '文档名称重复'})
         file = File(fileName=fileName, fileCreator=user, content=model_content, create=createTime,
                     lastEditTime=createTime, lastEditUser=user, lastEditTimeRecord=time, judge=1, fileTeam=team,
-                    fileFolder=folder, file_model=model_id)
+                    fileFolder=folder, file_model=model_id, new=1)
         file.save()
     return JsonResponse({'errno': 0, 'msg': '文档创建成功', 'file_id': file.fileId})
 

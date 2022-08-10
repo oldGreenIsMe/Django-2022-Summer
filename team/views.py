@@ -77,6 +77,7 @@ def authorize_admin(request):
         if user_team.permission == 0:
             user_team.permission = 1
             user_team.save()
+        authorizeAdminNotice(creator.username, user.username, team.teamname, user.email)
         return JsonResponse({'errno': 0, 'msg': '管理员授权成功'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
@@ -114,8 +115,6 @@ def invite_user(request):
     user = users.first()
     if UserTeam.objects.filter(user=user, team=team).exists():
         return JsonResponse({'errno': 300013, 'msg': '被邀请用户已在团队中'})
-    if InviteMessage.objects.filter(user=user, team=team, status=1).exists():
-        return JsonResponse({'errno': 300012, 'msg': '邀请或申请已存在'})
     InviteMessage.objects.create(team=team, user=user, inviter=admin, timeOrder=timezone.now() +
                                                                                 datetime.timedelta(hours=8))
     inviteMemberSendMethod(admin.username, user.username, user.userid, team.teamname, team.teamid, user.email)
@@ -360,8 +359,6 @@ def apply_join(request):
         team = Team.objects.get(teamid=teamid)
         userid = request.META.get('HTTP_USERID')
         user = User.objects.get(userid=userid)
-        if InviteMessage.objects.filter(user=user, team=team, status=1).filter(Q(type=1) | Q(type=2)).exists():
-            return JsonResponse({'errno': 300012, 'msg': '邀请或申请已存在'})
         userTeamList = UserTeam.objects.filter(team=team).filter(Q(permission=1) | Q(permission=2))
         nowTime = timezone.now() + datetime.timedelta(hours=8)
         for userTeam in userTeamList:
@@ -598,8 +595,6 @@ def copyFolder(request):
         if not folders.exists():
             return JsonResponse({'errno': 700004, 'msg': '目标文件夹不存在'})
         toFolder = folders.first()
-        if toFolder.folderTeam.teamid != team.teamid:
-            return JsonResponse({'errno': 500010, 'msg': '没有权限执行该操作'})
     newName = folder.folderName
     if toFolder != folder.fatherFolder:
         if Folder.objects.filter(folderTeam=folder.folderTeam, folderName=newName, fatherFolder=toFolder).exists():
@@ -611,6 +606,7 @@ def copyFolder(request):
             i += 1
     newFolder = Folder(folderTeam=folder.folderTeam, folderName=newName, isRoot=isRoot, fatherFolder=toFolder,
                        folderCreator=user, createTime=editTime, lastEditTime=editTime)
+    newFolder.save()
     copyFolderMethod(folder, newFolder, editTimeStr, editTime, user)
     return JsonResponse({'errno': 0, 'msg': '文件夹复制成功'})
 
@@ -653,6 +649,32 @@ def copyTeamFile(request):
                         lastEditTime=editTimeStr, lastEditUser=user, lastEditTimeRecord=editTime,
                         judge=1, fileTeam=file.fileTeam, fileFolder=toFolder, new=2, file_model=file.file_model)
     return JsonResponse({'errno': 0, 'msg': '文档复制成功'})
+
+
+@csrf_exempt
+def deleteFolder(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    folderId = request.POST.get('folder_id')
+    folders = Folder.objects.filter(folderId=folderId)
+    if not folders.exists():
+        return JsonResponse({'errno': 700002, 'msg': '文件夹不存在'})
+    folder = folders.first()
+    folder.delete()
+    return JsonResponse({'errno': 0, 'msg': '文件夹删除成功'})
+
+
+@csrf_exempt
+def deleteTeamFile(request):
+    if request.method != 'POST':
+        return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
+    fileId = request.POST.get('file_id')
+    files = File.objects.filter(fileId=fileId)
+    if not files.exists():
+        return JsonResponse({'errno': 400004, 'msg': '文档不存在'})
+    file = files.first()
+    file.delete()
+    return JsonResponse({'errno': 0, 'msg': '团队文档删除成功'})
 
 
 @csrf_exempt
@@ -733,6 +755,7 @@ def copyFolderMethod(oldFolder, newFolder, timeStr, time, user):
         midNewFolder = Folder(folderTeam=folder.folderTeam, folderName=folder.folderName, isRoot=2,
                               fatherFolder=newFolder, folderCreator=folder.folderCreator, createTime=time,
                               lastEditTime=time)
+        midNewFolder.save()
         copyFolderMethod(folder, midNewFolder, timeStr, time, user)
     for file in fileList:
         File.objects.create(fileName=file.fileName, fileCreator=file.fileCreator, content=file.content, create=timeStr,
