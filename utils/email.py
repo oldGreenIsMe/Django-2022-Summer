@@ -32,7 +32,10 @@ def sendVerifyCodeMethod(toEmail, mode):
     mail = smtplib.SMTP()
     mail.connect("smtp.qq.com")
     mail.login("805659773@qq.com", settings.SECRETS['email_key'])
-    mail.sendmail("805659773@qq.com", [toEmail], message.as_string())
+    try:
+        mail.sendmail("805659773@qq.com", [toEmail], message.as_string())
+    except smtplib.SMTPRecipientsRefused:
+        return -1
     return verifyCode
 
 
