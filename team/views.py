@@ -189,7 +189,9 @@ def teamspace(request):
             'proj_id': proj.projId,
             'proj_name': proj.projName,
             'proj_photo': proj.photo.url,
-            'proj_info': proj.projInfo
+            'proj_info': proj.projInfo,
+            'start_time': proj.startTime,
+            'end_time': proj.endTime
         })
     members = team.user_set.all()
     memberdata = []
