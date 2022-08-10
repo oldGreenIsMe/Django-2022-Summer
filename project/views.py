@@ -16,7 +16,7 @@ def createProj(request):
     projName = request.POST.get('proj_name')
     user = User.objects.get(userid=request.META.get('HTTP_USERID'))
     projTeam = Team.objects.get(teamid=request.POST.get('team_id'))
-    if not UserTeam.objects.filter(user=user, projTeam=projTeam).exists():
+    if not UserTeam.objects.filter(user=user, team=projTeam).exists():
         return JsonResponse({'errno': 500001, 'msg': '没有权限创建项目'})
     projInfo = request.POST.get('proj_info')
     if projInfo is None or projInfo == "":
