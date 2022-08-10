@@ -115,9 +115,8 @@ def invite_user(request):
     user = users.first()
     if UserTeam.objects.filter(user=user, team=team).exists():
         return JsonResponse({'errno': 300013, 'msg': '被邀请用户已在团队中'})
-    if InviteMessage.objects.filter(user=user, team=team, status=1).exists():
-        return JsonResponse({'errno': 300012, 'msg': '邀请或申请已存在'})
-    InviteMessage.objects.create(team=team, user=user, inviter=admin, timeOrder=timezone.now() +
+    if not InviteMessage.objects.filter(user=user, team=team, status=1).exists():
+        InviteMessage.objects.create(team=team, user=user, inviter=admin, timeOrder=timezone.now() +
                                                                                 datetime.timedelta(hours=8))
     inviteMemberSendMethod(admin.username, user.username, user.userid, team.teamname, team.teamid, user.email)
     return JsonResponse({'errno': 0, 'msg': '用户邀请已发送'})
@@ -359,14 +358,16 @@ def apply_join(request):
         team = Team.objects.get(teamid=teamid)
         userid = request.META.get('HTTP_USERID')
         user = User.objects.get(userid=userid)
+        judge = False
         if InviteMessage.objects.filter(user=user, team=team, status=1).filter(Q(type=1) | Q(type=2)).exists():
-            return JsonResponse({'errno': 300012, 'msg': '邀请或申请已存在'})
+            judge = True
         userTeamList = UserTeam.objects.filter(team=team).filter(Q(permission=1) | Q(permission=2))
         nowTime = timezone.now() + datetime.timedelta(hours=8)
         for userTeam in userTeamList:
             applyJoinMethod(userTeam.user.username, user.username, user.userid, team.teamname, team.teamid,
                             userTeam.user.email)
-            InviteMessage.objects.create(team=team, inviter=userTeam.user, user=user, timeOrder=nowTime, type=2)
+            if not judge:
+                InviteMessage.objects.create(team=team, inviter=userTeam.user, user=user, timeOrder=nowTime, type=2)
         return JsonResponse({'errno': 0, 'msg': '申请已发送'})
     else:
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
