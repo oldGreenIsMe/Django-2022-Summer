@@ -629,15 +629,18 @@ def file_center(request):
         teamId = request.POST.get('teamid')
         team = Team.objects.get(teamid=teamId)
         teamData = getFolderContent(0)
-        projects = Project.objects.filter(projTeam=team)
+        projects = Project.objects.filter(projTeam=team, status=1)
         projects_data = []
         for project in projects:
             files_data = []
             files = File.objects.filter(projectId=project, judge=0)
             for file in files:
                 files_data.append({
-                    'fileId': file.fileId,
-                    'fileName': file.fileName
+                    'file_id': file.fileId,
+                    'file_name': file.fileName,
+                    'file_flag': 0,
+                    'last_edit_time': file.lastEditTime,
+                    'project_id': project.projId
                 })
             projects_data.append({
                 'projectId': project.projId,
@@ -655,22 +658,30 @@ def getFolderContent(folderId):
         thisFolder = None
     else:
         thisFolder = Folder.objects.get(folderId=folderId)
-    folders = Folder.objects.filter(fatherFolder=thisFolder).order_by('-lastEditTime')
-    files = File.objects.filter(fileFolder=thisFolder).order_by('-lastEditTimeRecord')
+    folders = Folder.objects.filter(folderTeam=thisFolder.folderTeam, fatherFolder=thisFolder).order_by('-lastEditTime')
+    files = File.objects.filter(fileTeam=thisFolder.folderTeam, fileFolder=thisFolder).order_by('-lastEditTimeRecord')
     for folder in folders:
+        midId = 0
+        if folder.fatherFolder is not None:
+            midId = folder.fatherFolder.folderId
         data.append({
             'file_id': int(folder.folderId),
             'file_name': folder.folderName,
             'file_flag': 1,
             'last_edit_time': folder.lastEditTime.strftime('%Y-%m-%d %H:%M:%S'),
+            'parent_folder_id': midId,
             'file_list': getFolderContent(folder.folderId)
         })
     for file in files:
+        midId = 0
+        if file.fileFolder is not None:
+            midId = file.fileFolder.folderId
         data.append({
             'file_id': int(file.fileId),
             'file_name': file.fileName,
             'file_flag': 0,
             'last_edit_time': file.lastEditTime,
+            'parent_folder_id': midId,
             'file_list': []
         })
     return data
