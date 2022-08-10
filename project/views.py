@@ -227,7 +227,7 @@ def copy_project(request):
     if Project.objects.filter(projName=proj.projName + '(' + str(copy_num + 1) + ')', projTeam=proj.projTeam).exists():
         return JsonResponse({'errno': 600001, 'msg': '复制时发现同名项目'})
     copy_time = request.POST.get('copy_time')
-    copy_time_record = datetime.datetime.strptime(copy_time, '%Y-%m-%d %H:%M') + datetime.timedelta(hours=8)
+    copy_time_record = datetime.datetime.strptime(copy_time, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours=8)
     proj_copy = Project(projName=proj.projName + '(' + str(copy_num + 1) + ')', projCreator=user,
                         projTeam=proj.projTeam, projInfo=proj.projInfo, startTimeRecord=proj.startTimeRecord,
                         startTime=proj.startTime, endTime=proj.endTime, deletePerson=None, deleteTime=None)
