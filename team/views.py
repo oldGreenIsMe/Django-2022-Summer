@@ -400,6 +400,8 @@ def sendVerifyCode(request):
         return JsonResponse({'errno': 300007, 'msg': '邮箱已注册'})
     judge = int(request.POST.get('judge'))
     returnVal = sendVerifyCodeMethod(email, judge)
+    if returnVal == -1:
+        return JsonResponse({'errno': 300017, 'msg': '邮箱域名无效，发送验证码失败'})
     return JsonResponse({'errno': 0, 'msg': '验证码发送成功', 'code': returnVal})
 
 
