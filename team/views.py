@@ -628,7 +628,7 @@ def file_center(request):
     if request.method == 'POST':
         teamId = request.POST.get('teamid')
         team = Team.objects.get(teamid=teamId)
-        teamData = getFolderContent(0)
+        teamData = getFolderContent(0, team)
         projects = Project.objects.filter(projTeam=team, status=1)
         projects_data = []
         for project in projects:
@@ -652,14 +652,14 @@ def file_center(request):
         return JsonResponse({'errno': 200001, 'msg': '请求方式错误'})
 
 
-def getFolderContent(folderId):
+def getFolderContent(folderId, team):
     data = []
     if folderId == 0:
         thisFolder = None
     else:
         thisFolder = Folder.objects.get(folderId=folderId)
-    folders = Folder.objects.filter(folderTeam=thisFolder.folderTeam, fatherFolder=thisFolder).order_by('-lastEditTime')
-    files = File.objects.filter(fileTeam=thisFolder.folderTeam, fileFolder=thisFolder).order_by('-lastEditTimeRecord')
+    folders = Folder.objects.filter(folderTeam=team, fatherFolder=thisFolder).order_by('-lastEditTime')
+    files = File.objects.filter(fileTeam=team, fileFolder=thisFolder).order_by('-lastEditTimeRecord')
     for folder in folders:
         midId = 0
         if folder.fatherFolder is not None:
@@ -670,7 +670,7 @@ def getFolderContent(folderId):
             'file_flag': 1,
             'last_edit_time': folder.lastEditTime.strftime('%Y-%m-%d %H:%M:%S'),
             'parent_folder_id': midId,
-            'file_list': getFolderContent(folder.folderId)
+            'file_list': getFolderContent(folder.folderId, folder.folderTeam)
         })
     for file in files:
         midId = 0
